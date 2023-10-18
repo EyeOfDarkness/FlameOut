@@ -26,17 +26,6 @@ public class FlameOut extends Mod{
         MockGroup.load();
         Severation.init();
         new FlameOutSFX();
-        //TODO input
-        /*
-        Events.run(Trigger.update, () -> {
-            if(Core.input.keyTap(KeyCode.z)){
-                Unit u = Vars.player.unit();
-
-                float ang = Angles.angle(u.x, u.y, Vars.player.mouseX, Vars.player.mouseY);
-                FlameBullets.test.create(u, u.team, u.x, u.y, ang);
-            }
-        });
-        */
         Events.on(FileTreeInitEvent.class, e -> Core.app.post(() -> {
             FlameSounds.load();
             if(!Vars.headless){
