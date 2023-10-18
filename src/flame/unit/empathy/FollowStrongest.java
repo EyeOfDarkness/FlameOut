@@ -18,6 +18,8 @@ public class FollowStrongest extends EmpathyAI{
     Teamc strongest;
     float scanTime = 0f;
     float forgetTime = 0f;
+    float coreTime = 0f;
+    boolean targetedCore = false;
 
     @Override
     void update(){
@@ -73,12 +75,21 @@ public class FollowStrongest extends EmpathyAI{
             }
         }
         if(t != null){
-            strongest = t;
-            forgetTime = 10f * 60f;
+            //strongest = t;
+            //forgetTime = 10f * 60f;
+            if((t instanceof CoreBuild || (t instanceof Unit u && u.spawnedByCore)) && coreTime <= (2f * 60f)){
+                targetedCore = true;
+            }else{
+                strongest = t;
+                forgetTime = 10f * 60f;
+                coreTime = 0f;
+                targetedCore = false;
+            }
         }
     }
 
     void updateTargeting(){
+        if(targetedCore) coreTime += Time.delta;
         if(strongest != null && (!strongest.isAdded() || strongest.team() == unit.team)){
             strongest = null;
         }
