@@ -1,3 +1,5 @@
+## Not intended for Multiplayer or Mobile
+
 ## Building for Desktop Testing
 
 1. Install JDK **17**.
