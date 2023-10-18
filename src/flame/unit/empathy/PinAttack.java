@@ -80,7 +80,7 @@ public class PinAttack extends AttackAI{
                 FlameBullets.pin.create(unit, unit.team, v.x, v.y, v.angleTo(in));
                 Sounds.missile.at(v.x, v.y, 2f);
 
-                spawnTimer = 3f;
+                spawnTimer = unit.isDecoy() ? 6f : 3f;
             }
             barrageTime -= Time.delta;
             if(barrageTime <= 0f){

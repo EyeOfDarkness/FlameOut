@@ -25,6 +25,7 @@ public class EmpathyUnit extends UnitEntity{
     int attackAIChanges = 0;
 
     boolean decoy = false;
+    private float decoyDelay, decoyTime;
 
     private float trueHealth, trueMaxHealth;
     private Team trueTeam;
@@ -56,7 +57,6 @@ public class EmpathyUnit extends UnitEntity{
     private float battleTime;
 
     private float damageTaken, maxDamageTaken, damageDelay;
-    private float decoyDelay;
 
     //priority, type(velocity, fixed), x, y
     //priority, rotation, speed
@@ -181,6 +181,8 @@ public class EmpathyUnit extends UnitEntity{
 
         super.update();
 
+        if(!decoy) Vars.state.teams.bosses.add(this);
+
         updateNearby();
         updateDamageTaken();
         if(decoyDelay > 0) decoyDelay -= Time.delta;
@@ -259,7 +261,7 @@ public class EmpathyUnit extends UnitEntity{
         damageDelay = 60f;
 
         //1000000f
-        if(decoyDelay <= 0f && (damageTaken >= 500000f || EmpathyDamage.isNaNInfinite(damageTaken, maxDamageTaken))){
+        if(decoyDelay <= 0f && (damageTaken >= 700000f || EmpathyDamage.isNaNInfinite(damageTaken, maxDamageTaken))){
             duplicate();
             damageTaken = 0f;
             maxDamageTaken = 0f;
@@ -395,6 +397,14 @@ public class EmpathyUnit extends UnitEntity{
         y = Mathf.clamp(y, r2.y, r2.y + r2.height);
         tx = x;
         ty = y;
+
+        if(decoyTime < 7f * 60){
+            decoyTime += Time.delta;
+            if(decoyTime >= 7f * 60){
+                maxHealth = 20000f;
+                health = Math.min(health, maxHealth);
+            }
+        }
     }
 
     void updateTrail(){
@@ -663,7 +673,7 @@ public class EmpathyUnit extends UnitEntity{
         if(!decoy){
             if(invFrames <= 0f){
                 //float cdamage = Mathf.clamp(amount, 0f, 100f / 900f);
-                float cdamage = Mathf.clamp(amount, 0f, 100f / 700f);
+                float cdamage = Mathf.clamp(amount, 0f, 100f / 500f);
                 if(parryTime <= 0f){
                     parryHealth = trueHealth;
                     parryTime = 6f;
@@ -859,6 +869,10 @@ public class EmpathyUnit extends UnitEntity{
         EmpathyDamage.onDuplicate(this, u);
 
         return u;
+    }
+
+    boolean isDecoy(){
+        return decoy;
     }
 
     void updateUsages(boolean attack){

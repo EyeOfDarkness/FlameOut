@@ -151,7 +151,7 @@ public class SwordAttack extends AttackAI{
                 Fx.colorSpark.at(x, y, unit.rotation, FlamePal.empathy);
                 if(h instanceof Unit u){
                     float ele = u.elevation;
-                    EmpathyDamage.damageUnit(u, Math.max(10000f, u.maxHealth / 15f) * Time.delta, true, Math.max(u.hitSize, u.type.legLength) < 30f ? null : () -> {
+                    EmpathyDamage.damageUnit(u, Math.max(8000f, u.maxHealth / 35f) * Time.delta, true, Math.max(u.hitSize, u.type.legLength) < 30f ? null : () -> {
                         //SpecialDeathEffects.get(u.type.name).deathUnit(u, x, y, unit.angleTo(tx, ty));
                         float tz = ele > 0.5f ? (u.type.lowAltitude ? Layer.flyingUnitLow : Layer.flyingUnit) : (u.type.groundLayer + Mathf.clamp(u.hitSize / 4000f, 0f, 0.01f));
                         float shad = Mathf.clamp(ele, u.type.shadowElevation, 1f) * u.type.shadowElevationScl;
@@ -180,7 +180,7 @@ public class SwordAttack extends AttackAI{
                         batch.switchBatch(u::draw);
                     });
                 }else if(h instanceof Building b){
-                    EmpathyDamage.damageBuilding(b, Math.max(10000f, b.maxHealth / 15f) * Time.delta, true, null);
+                    EmpathyDamage.damageBuilding(b, Math.max(8000f, b.maxHealth / 35f) * Time.delta, true, null);
                 }
             });
         }

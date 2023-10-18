@@ -32,7 +32,7 @@ public class EmpathyTrackerBulletType extends BulletType{
         super.update(b);
         Rect r = Tmp.r3;
         b.hitbox(r);
-        float dam = 200f;
+        float dam = 170f;
         
         if(b.timer(0, 15)){
             b.collided.clear();
@@ -43,7 +43,7 @@ public class EmpathyTrackerBulletType extends BulletType{
                 hit(b, b.x, b.y);
 
                 boolean lethal = u.maxHealth < dam * 3f;
-                float tdam = Math.max(dam, u.maxHealth / 800f);
+                float tdam = Math.max(dam, u.maxHealth / 1200f);
                 EmpathyDamage.damageUnit(u, tdam, lethal, null);
                 b.collided.add(u.id);
             }
@@ -53,7 +53,7 @@ public class EmpathyTrackerBulletType extends BulletType{
             hit(b, b.x, b.y);
 
             boolean lethal = build.maxHealth < dam * 3f;
-            float tdam = Math.max(dam, build.maxHealth / 800f);
+            float tdam = Math.max(dam, build.maxHealth / 1200f);
             EmpathyDamage.damageBuilding(build, tdam, lethal, null);
             b.collided.add(build.id);
         }

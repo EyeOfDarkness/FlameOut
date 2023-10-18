@@ -50,7 +50,7 @@ public class SurroundLaserAttack extends AttackAI{
 
     @Override
     float weight(){
-        return unit.health < 40f ? (unit.useLethal() ? 900f + unit.extraLethalScore() : super.weight() / 1.5f) : -1f;
+        return unit.health < 60f ? (unit.useLethal() ? 900f + unit.extraLethalScore() : super.weight() / 1.5f) : -1f;
     }
 
     @Override

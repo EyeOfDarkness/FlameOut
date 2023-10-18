@@ -223,7 +223,7 @@ public class PrimeAttack extends AttackAI{
                 if(v.isNaN() || v.isInfinite()){
                     v.trns(angle, 12f);
                 }
-                EmpathyDamage.damageUnitKnockback(e, Math.max(10000f, e.maxHealth / 7f), v.x, v.y, () -> {
+                EmpathyDamage.damageUnitKnockback(e, Math.max(10000f, e.maxHealth / 12f), v.x, v.y, () -> {
                     //Fx.impactReactorExplosion.at(e.x, e.y);
                     SpecialDeathEffects.get(e.type).deathUnit(e, unit.x, unit.y, Angles.angle(unit.x, unit.y, e.x, e.y));
                     
@@ -242,7 +242,7 @@ public class PrimeAttack extends AttackAI{
         }
         for(Building e : tmpBuildings){
             //maxMaxHealth = Math.max(maxMaxHealth, e.maxHealth);
-            EmpathyDamage.damageBuilding(e, Math.max(25000f, e.maxHealth / 7f), true, () -> {
+            EmpathyDamage.damageBuilding(e, Math.max(25000f, e.maxHealth / 12f), true, () -> {
                 //Fx.impactReactorExplosion.at(e.x, e.y);
                 SpecialDeathEffects.get(e.block).deathBuilding(e, unit.x, unit.y, Angles.angle(unit.x, unit.y, e.x, e.y));
                 

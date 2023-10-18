@@ -19,10 +19,11 @@ public class RendAttack extends AttackAI{
     float reload = 0f;
     float moveDelay = 0f;
     float swapDelay = 0f;
+    int lastRendCount = 0;
     
     @Override
     float weight(){
-        return unit.useLethal() ? 1000f + unit.extraLethalScore() : 2f;
+        return reload <= 0f ? (unit.useLethal() ? 1000f + unit.extraLethalScore() : 2f) : -1f;
     }
     
     @Override
@@ -45,7 +46,7 @@ public class RendAttack extends AttackAI{
                 r.time += Time.delta;
             }
             if(r.time >= 6f && !r.slashed){
-                hit(r.x1, r.y1, r.x2, r.y2);
+                hit(r.x1, r.y1, r.x2, r.y2, lastRendCount);
                 r.slashed = true;
 
                 Vec2 n = Intersector.nearestSegmentPoint(r.x1, r.y1, r.x2, r.y2, Core.camera.position.x, Core.camera.position.y, Tmp.v4);
@@ -56,14 +57,16 @@ public class RendAttack extends AttackAI{
         reload -= Time.delta;
     }
 
-    void hit(float x1, float y1, float x2, float y2){
+    void hit(float x1, float y1, float x2, float y2, int rendCount){
         float minSize = 15f;
         Utils.hitLaser(unit.team, 3f, x1, y1, x2, y2, null, h -> false, (h, x, y) -> {
             FlameFX.empathyRendHit.at(x, y, Angles.angle(x1, y1, x2, y2));
             if(h instanceof Unit u){
                 float ele = u.elevation;
 
-                EmpathyDamage.damageUnit(u, Math.max(30000f, u.maxHealth / 6f), true, Math.max(u.hitSize, u.type.legLength) < minSize ? null : () -> {
+                float lethal = (u.health / rendCount) > (u.maxHealth * 0.125f) ? u.maxHealth / 20f : u.maxHealth + 100f;
+
+                EmpathyDamage.damageUnit(u, Math.max(30000f, lethal), true, Math.max(u.hitSize, u.type.legLength) < minSize ? null : () -> {
                     float tz = ele > 0.5f ? (u.type.lowAltitude ? Layer.flyingUnitLow : Layer.flyingUnit) : (u.type.groundLayer + Mathf.clamp(u.hitSize / 4000f, 0f, 0.01f));
                     float shad = Mathf.clamp(ele, u.type.shadowElevation, 1f) * u.type.shadowElevationScl;
 
@@ -86,7 +89,10 @@ public class RendAttack extends AttackAI{
                     batch.switchBatch(u::draw);
                 });
             }else if(h instanceof Building b){
-                EmpathyDamage.damageBuilding(b, Math.max(30000f, b.maxHealth / 6), true, b.block.size < 3 ? null : () -> {
+                float lethal = (b.health / rendCount) > (b.maxHealth * 0.125f) ? b.maxHealth / 20f : b.maxHealth + 100f;
+                //float lethal = (b.health / b.maxHealth) > 0.25f ? b.maxHealth / 16f : b.maxHealth + 100f;
+
+                EmpathyDamage.damageBuilding(b, Math.max(30000f, lethal), true, b.block.size < 3 ? null : () -> {
                     SpecialDeathEffects eff = SpecialDeathEffects.get(b.block);
                     CutBatch batch = FlameOut.cutBatch;
                     batch.explosionEffect = eff.explosionEffect != Fx.none ? eff.explosionEffect : null;
@@ -131,6 +137,7 @@ public class RendAttack extends AttackAI{
 
                     Time.run(delay2, () -> FlameSounds.empathyRendSwing.at(ax, ay, Mathf.random(0.7f, 1.2f)));
                 }
+                lastRendCount = 7;
                 //Tmp.v1.set(unit.x, unit.y).sub(unit.getTarget()).nor().scl(-(100f + size * 2f));
                 Tmp.v1.set(target).sub(unit).nor().scl(100f + size * 2f);
                 float mx = (target.x() - unit.x) + Tmp.v1.x;
@@ -167,6 +174,7 @@ public class RendAttack extends AttackAI{
 
                     Time.run(delay2, () -> FlameSounds.empathyRendSwing.at(ax, ay, Mathf.random(0.7f, 1.2f)));
                 }
+                lastRendCount = 14;
                 float sng = Mathf.random(360f);
                 float len = 0f;
                 if(target instanceof Unit u){

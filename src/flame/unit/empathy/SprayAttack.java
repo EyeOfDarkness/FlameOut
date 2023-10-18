@@ -37,10 +37,10 @@ public class SprayAttack extends AttackAI{
 
                 Sounds.missile.at(v.x, v.y, 2.5f);
 
-                reload2 = 2f;
+                reload2 = unit.isDecoy() ? 4f : 2f;
             }
             reload2 -= Time.delta;
-            attackTime -= Time.delta * (unit.useLethal() ? 3f : 1f);
+            attackTime -= Time.delta * (unit.useLethal() ? 5f : 1f);
             if(attackTime <= 0f){
                 if(Mathf.chance(0.9f / endChance) && !quickSwap && unit.getTarget() != null && !unit.useLethal()){
                     endChance += 3;

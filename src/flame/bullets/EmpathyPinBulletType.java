@@ -41,12 +41,12 @@ public class EmpathyPinBulletType extends BulletType{
         b.vel.setLength(Mathf.lerp(2f, 16f, Mathf.clamp(b.time / 60f)));
         if(b.timer(0, 5f)){
             float length = 40 / 2f;
-            float dam = 800f;
+            float dam = 700f;
             Vec2 v = Tmp.v1.trns(b.rotation(), length);
             Utils.hitLaser(b.team, 2f, -v.x + b.x, -v.y + b.y, v.x + b.x, v.y + b.y, null, h -> false, (h, x, y) -> {
                 hit(b, x, y);
                 boolean lethal = h.maxHealth() < dam * 2f;
-                float tdam = Math.max(dam, h.maxHealth() / 300f);
+                float tdam = Math.max(dam, h.maxHealth() / 500f);
                 if(h instanceof Unit u){
                     EmpathyDamage.damageUnit(u, tdam, lethal, null);
                 }else if(h instanceof Building build){

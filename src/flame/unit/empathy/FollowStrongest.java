@@ -38,7 +38,6 @@ public class FollowStrongest extends EmpathyAI{
                     //float s = (u.health / 100f + FlameOutSFX.inst.getUnitDps(u.type)) - unit.dst(u.x, u.y) / 10000f;
                     float s = (u.maxHealth / 100f + FlameOutSFX.inst.getUnitDps(u.type)) - unit.dst(u.x, u.y) / 10000f;
                     //if(u instanceof TimedKillc) s /= 1000;
-                    //TODO remove
                     //if(u instanceof EmpathyUnit) s += 9999999;
                     if(t == null || s > scr){
                         t = u;
@@ -77,7 +76,7 @@ public class FollowStrongest extends EmpathyAI{
         if(t != null){
             //strongest = t;
             //forgetTime = 10f * 60f;
-            if((t instanceof CoreBuild || (t instanceof Unit u && u.spawnedByCore)) && coreTime <= (2f * 60f)){
+            if((t instanceof CoreBuild || (t instanceof Unit u && u.spawnedByCore)) && coreTime <= (3f * 60f)){
                 targetedCore = true;
             }else{
                 strongest = t;
@@ -108,21 +107,6 @@ public class FollowStrongest extends EmpathyAI{
             //float dst = 200f + size;
             float dst = unit.activeAttack.effectiveDistance() + size;
 
-            /*
-            Vec2 vec = Tmp.v1;
-
-            vec.set(nearestCore).sub(unit);
-
-            float length = Mathf.clamp((unit.dst(nearestCore) - 220f) / 100f, -1f, 1f);
-
-            vec.setLength(unit.speed());
-            vec.scl(length);
-
-            if(vec.isNaN() || vec.isInfinite() || vec.isZero()) return;
-
-            unit.movePref(vec);
-            unit.lookAt(unit.angleTo(nearestCore));
-            */
             Vec2 vec = Tmp.v1.set(strongest).sub(unit);
             Vec2 vel = unit.trueVelocity();
             //float dstt = unit.dst(strongest);

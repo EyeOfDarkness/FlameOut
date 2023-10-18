@@ -50,6 +50,7 @@ public class SwordBarrageAttack extends AttackAI{
                 s.x = v.x;
                 s.y = v.y;
                 s.rotation = r + 180f;
+                s.fromDecoy = unit.isDecoy();
                 spawners.add(s);
                 FlameSounds.empathySquareCharge.at(v.x, v.y, 2.5f);
             }
@@ -68,6 +69,7 @@ public class SwordBarrageAttack extends AttackAI{
     class SwordSpawner{
         float x, y, rotation;
         float time, reload;
+        boolean fromDecoy;
 
         void update(){
             if(time > 16f && time < (4f * 60f) - 16f){
@@ -75,7 +77,7 @@ public class SwordBarrageAttack extends AttackAI{
                     Tmp.v1.trns(rotation - 90f, Mathf.range(30f)).add(x, y);
                     FlameBullets.sword.create(unit, unit.team, Tmp.v1.x, Tmp.v1.y, rotation);
                     FlameSounds.empathySquareShoot.at(Tmp.v1, Mathf.random(0.9f, 1.1f) * 2.5f);
-                    reload = 5f;
+                    reload = fromDecoy ? 10f : 5f;
                 }
                 reload -= Time.delta;
             }
