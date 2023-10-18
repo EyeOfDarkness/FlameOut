@@ -48,10 +48,18 @@ public class EmpathyDamage{
         addedSet.clear();
         deaths.clear();
 
-        if(spawner != null && !spawner.spawned){
-            spawner = null;
+        if(spawner != null){
+            spawner.time = 0f;
+            spawner.active = false;
         }
     }
+    public static void worldLoad(){
+        if(spawner != null){
+            spawner.reactivateTime = 5f * 60f;
+            spawner.timeScl++;
+        }
+    }
+
     public static void initContent(){
         //addArr = new int[2];
         ContentLoader con = Vars.content;
@@ -62,11 +70,15 @@ public class EmpathyDamage{
         addArr[1] = new int[blocks.size];
     }
 
-    public static void empathyDeath(float x, float y, float rotation){
+    static void empathyDeath(float x, float y, float rotation){
         EmpathyDeath d = new EmpathyDeath();
         d.x = x;
         d.y = y;
         d.rotation = rotation;
+
+        if(spawner != null){
+            spawner.disabled = true;
+        }
 
         deaths.add(d);
     }
@@ -102,7 +114,7 @@ public class EmpathyDamage{
     }
 
     public static void update(){
-        if(spawner != null && spawner.active){
+        if(spawner != null && (spawner.active || spawner.reactivateTime > 0f)){
             spawner.update();
         }
         if(FlameUnitTypes.empathy != null){

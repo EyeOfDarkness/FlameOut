@@ -18,8 +18,10 @@ import static arc.math.Interp.*;
 public class EmpathySpawner{
     float time = 0f;
     float x, y;
-    boolean active = true;
+    float reactivateTime = 0f;
+    boolean active = true, disabled = false;
     boolean spawned = false;
+    int timeScl = 1;
 
     final static Vec2 v = new Vec2(), v2 = new Vec2();
     final static FloatSeq polySeq = new FloatSeq();
@@ -27,8 +29,18 @@ public class EmpathySpawner{
     final static float duration = 15f * 60f;
 
     void update(){
+        if(reactivateTime > 0 && !disabled){
+            reactivateTime -= Time.delta;
+            if(reactivateTime <= 0f){
+                active = true;
+                spawned = false;
+                time = 0f;
+                x = Vars.player.unit().x;
+                y = Vars.player.unit().y;
+            }
+        }
         if(active){
-            time += Time.delta;
+            time += Time.delta * timeScl;
 
             if(time >= duration - 15 && !spawned){
                 spawnEmpathy();

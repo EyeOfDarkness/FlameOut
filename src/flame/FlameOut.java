@@ -1,9 +1,6 @@
 package flame;
 
 import arc.*;
-import arc.graphics.g2d.*;
-import arc.input.*;
-import arc.math.*;
 import flame.bullets.*;
 import flame.effects.*;
 import flame.entities.*;
@@ -11,9 +8,7 @@ import flame.graphics.*;
 import flame.unit.*;
 import flame.unit.empathy.*;
 import mindustry.*;
-import mindustry.content.*;
 import mindustry.game.EventType.*;
-import mindustry.gen.*;
 import mindustry.mod.*;
 
 public class FlameOut extends Mod{
@@ -39,6 +34,7 @@ public class FlameOut extends Mod{
                 FlameOutSFX.inst.loadHeadless();
             }
         }));
+        Events.on(WorldLoadEvent.class, e -> EmpathyDamage.worldLoad());
     }
 
     @Override
