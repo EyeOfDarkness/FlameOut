@@ -6,7 +6,7 @@ import mindustry.type.*;
 import mindustry.world.meta.*;
 
 public class FlameUnitTypes{
-    public static UnitType apathy, empathy;
+    public static UnitType apathy, apathySentry, empathy;
 
     public static void load(){
         apathy = new ApathyUnitType("apathy"){{
@@ -31,6 +31,27 @@ public class FlameUnitTypes{
             envEnabled = Env.any;
             envDisabled = 0;
         }};
+        apathySentry = new UnitType("apathy-sweep-0"){{
+            outlines = false;
+            hidden = true;
+            useUnitCap = false;
+
+            health = 1000f;
+            drag = 0.5f;
+            hitSize = 10f;
+
+            controller = unit -> new NullAI();
+            constructor = ApathySentryUnit::new;
+
+            fallEffect = fallEngineEffect = Fx.none;
+            deathExplosionEffect = Fx.none;
+            createScorch = false;
+            flying = true;
+
+            envEnabled = Env.any;
+            envDisabled = 0;
+        }};
+
         empathy = new EmpathyUnitType("empathy");
     }
 }

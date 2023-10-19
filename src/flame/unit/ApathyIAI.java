@@ -194,7 +194,6 @@ public class ApathyIAI implements UnitController{
         data2 = 0f;
     }
     void updateLargeLaser(){
-        //
         if(strongest != null){
             float ato = unit.angleTo(strongest);
             //float adst = laser == null ? Math.max(Angles.angleDist(unit.rotation, ato) / 5f, 3f) : 0.05f;
@@ -452,7 +451,7 @@ public class ApathyIAI implements UnitController{
 
     void updateSwitchForm(){
         int maxIdx = -1;
-        float maxScore = -1f;
+        float maxScore = -99999f;
         laser = null;
 
         float bias = 0f;
@@ -514,10 +513,10 @@ public class ApathyIAI implements UnitController{
 
                 bulletCount += dps;
 
-                if(srad > unit.hitSize / 1.9f && dst < srad && !b.vel.isZero()){
+                if(unit.shieldStun <= 0f && dst < srad && !b.vel.isZero()){
                     //
                     if(b.vel.len() < 8f){
-                        b.hit = false;
+                        b.hit = true;
                         b.remove();
                     }else{
                         float angC = (((unit.angleTo(b) + 90f) * 2f) - b.rotation()) + Mathf.range(5f);
@@ -533,6 +532,10 @@ public class ApathyIAI implements UnitController{
                     FlameFX.shield.at(b.x, b.y, b.angleTo(unit));
 
                     unit.shieldHealth -= Math.min(dps / 2f, 500f);
+                    if(unit.shieldHealth <= 0f){
+                        unit.shieldStun = 4f * 60f;
+                    }
+
                     unit.stress += dps / 750f;
                 }else{
                     unit.stress += dps * b.vel.len() / 1000f;
@@ -556,9 +559,10 @@ public class ApathyIAI implements UnitController{
 
                             int angIdx = (int)Mathf.mod(angleTo / (360f / dbl), dbl);
                             directionalBias[angIdx] += dps;
-
-                            if(!(e instanceof TimedKillUnit || (dst < srad && ((e.type.weapons.size > 0 && (e.type.weapons.get(0).shootOnDeath && (e.type.speed <= 0.001f || e.type.speed > 5f))) || e.controller() instanceof MissileAI)))){
-                                dps += e.health / 500f;
+                            
+                            if(!(e instanceof TimedKillUnit || e.controller() instanceof MissileAI)){
+                            //if(!(e instanceof TimedKillUnit || (dst < srad && ((e.type.weapons.size > 0 && (e.type.weapons.get(0).shootOnDeath && (e.type.speed <= 0.001f || e.type.speed > 5f))) || e.controller() instanceof MissileAI))))
+                                dps += e.maxHealth / 500f;
                                 noEnemyTime = 0f;
                                 
                                 float sscr = dps - dst / 1500f;
@@ -583,7 +587,7 @@ public class ApathyIAI implements UnitController{
                                 unit.stress += dps / 1100f;
                             }else{
                                 bulletCount += dps;
-                                if(srad > unit.hitSize / 1.9f && dst < srad){
+                                if(unit.shieldStun <= 0f && dst < srad){
                                     //
                                     if(e.vel.len() < 6f){
                                         //e.hit = false;
@@ -599,6 +603,11 @@ public class ApathyIAI implements UnitController{
                                     FlameFX.shield.at(e.x, e.y, e.angleTo(unit));
 
                                     unit.shieldHealth -= Math.min(dps / 2f, 500f);
+
+                                    if(unit.shieldHealth <= 0f){
+                                        unit.shieldStun = 4f * 60f;
+                                    }
+
                                     unit.stress += dps / 750f;
                                 }
                             }
@@ -739,7 +748,7 @@ public class ApathyIAI implements UnitController{
         if(updateScore){
             Arrays.fill(shiftScore, 0f);
             //shiftScore[0] = Math.max(Math.max(100f, flyingCount), critDamage);
-            shiftScore[0] = Math.max(100f, critDamage);
+            shiftScore[0] = Math.max(20f, critDamage);
 
             /*
             if(isSurrounded()){
@@ -862,7 +871,7 @@ public class ApathyIAI implements UnitController{
     }
 
     void moveTo(){
-        if(strongest != null && strongestValue > 1000f){
+        if(strongest != null && (strongestValue > 1000f || nearestCore == null)){
             float dst = unit.dst(strongest);
             if(dst > scanRange - 100f){
                 Vec2 vec = Tmp.v1;
