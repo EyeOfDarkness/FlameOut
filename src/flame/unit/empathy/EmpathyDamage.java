@@ -43,20 +43,28 @@ public class EmpathyDamage{
         damages.clear();
         toRemove.clear();
 
-        units.clear();
-        empathyMap.clear();
         addedSet.clear();
         deaths.clear();
 
         if(spawner != null){
             spawner.time = 0f;
             spawner.active = false;
+            spawner.shouldSpawn = true;
+
+            if(!units.isEmpty()){
+                EmpathyUnit u = units.first().unit;
+                spawner.health = u.getTrueHealth();
+            }
         }
+        
+        units.clear();
+        empathyMap.clear();
     }
     public static void worldLoad(){
-        if(spawner != null){
+        if(spawner != null && spawner.shouldSpawn){
             spawner.reactivateTime = 5f * 60f;
             spawner.timeScl++;
+            spawner.shouldSpawn = false;
         }
     }
 
@@ -89,6 +97,7 @@ public class EmpathyDamage{
             s.x = x;
             s.y = y;
             s.active = true;
+            s.shouldSpawn = true;
             spawner = s;
         }
     }

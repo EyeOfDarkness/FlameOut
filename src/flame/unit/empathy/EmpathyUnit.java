@@ -79,6 +79,10 @@ public class EmpathyUnit extends UnitEntity{
         return true;
     }
 
+    float getTrueHealth(){
+        return trueHealth;
+    }
+
     @Override
     public void update(){
         float lastDelta = Time.delta;

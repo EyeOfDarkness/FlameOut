@@ -20,8 +20,10 @@ public class EmpathySpawner{
     float x, y;
     float reactivateTime = 0f;
     boolean active = true, disabled = false;
-    boolean spawned = false;
+    boolean spawned = false, shouldSpawn = true;
     int timeScl = 1;
+
+    float health = -1;
 
     final static Vec2 v = new Vec2(), v2 = new Vec2();
     final static FloatSeq polySeq = new FloatSeq();
@@ -54,7 +56,6 @@ public class EmpathySpawner{
     }
     private void spawnEmpathy(){
         EmpathyUnit unit = new EmpathyUnit();
-        //TODO set team to opposing team
         for(Team t : Team.all){
             if(Vars.player.team() != t && t != Team.derelict){
                 for(TeamData data : Vars.state.teams.present){
@@ -69,6 +70,10 @@ public class EmpathySpawner{
         unit.setType(FlameUnitTypes.empathy);
         unit.elevation = 1f;
         unit.heal();
+
+        if(health > 0){
+            unit.health = health;
+        }
 
         unit.x = x;
         unit.y = y;
