@@ -283,6 +283,21 @@ public class EmpathyUnit extends UnitEntity{
             damageDelay -= Time.delta;
         }
     }
+    int getCountDown(){
+        for(EmpathyAI ai : attackAIs){
+            if(ai instanceof CountDownAttack cd){
+                return cd.count;
+            }
+        }
+        return 0;
+    }
+    void setCountDown(int c){
+        for(EmpathyAI ai : attackAIs){
+            if(ai instanceof CountDownAttack cd){
+                cd.count = c;
+            }
+        }
+    }
 
     Teamc getTarget(){
         if(activeMovement == null) return null;

@@ -54,6 +54,7 @@ public class EmpathyDamage{
             if(!units.isEmpty()){
                 EmpathyUnit u = units.first().unit;
                 spawner.health = u.getTrueHealth();
+                spawner.countDown = u.getCountDown();
             }
         }
         

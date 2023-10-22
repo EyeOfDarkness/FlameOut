@@ -24,6 +24,7 @@ public class EmpathySpawner{
     int timeScl = 1;
 
     float health = -1;
+    int countDown = 0;
 
     final static Vec2 v = new Vec2(), v2 = new Vec2();
     final static FloatSeq polySeq = new FloatSeq();
@@ -80,6 +81,10 @@ public class EmpathySpawner{
         unit.rotation = 90f;
 
         unit.add();
+
+        if(countDown != 0){
+            unit.setCountDown(countDown);
+        }
     }
 
     void progressiveStar(float x, float y, float rad, float rot, int count, int stellation, float fin){
