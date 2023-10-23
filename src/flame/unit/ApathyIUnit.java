@@ -205,6 +205,8 @@ public class ApathyIUnit extends UnitEntity{
             if(shieldStun <= 0f){
                 shieldHealth = shieldMaxHealth / 2f;
             }
+        }
+        if(shieldStun > 0 || health < (maxHealth / 3f)){
             if(sentries.size < 8 && !createSentries && sentrySpawnDelay2 <= 0f){
                 createSentries = true;
                 sentryPosition = sentries.size;

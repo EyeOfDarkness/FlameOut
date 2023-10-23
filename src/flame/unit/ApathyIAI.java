@@ -795,7 +795,7 @@ public class ApathyIAI implements UnitController{
             if(currentTransformation == 4 && laser != null && laser.type != null) laser.time = laser.type.lifetime - 80;
             transformationTime = 0f;
             unit.extraShiftSpeed = 2f;
-            critStun = 5f * 60f;
+            critStun = 4f * 60f;
         }
         critDamage += damage / 2f;
         maxCritDamage = Math.max(critDamage, maxCritDamage);
