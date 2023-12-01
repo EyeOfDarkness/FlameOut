@@ -6,25 +6,30 @@ import arc.graphics.*;
 import arc.graphics.g2d.*;
 import arc.graphics.gl.*;
 import arc.math.*;
+import arc.struct.*;
 import flame.effects.*;
 import mindustry.entities.*;
 
 public class CutBatch extends Batch{
     public Effect explosionEffect;
     public Cons<Severation> cutHandler;
+    static Seq<Severation> returnEntities = new Seq<>();
 
-    public void switchBatch(Runnable run){
+    public Seq<Severation> switchBatch(Runnable run){
         Batch last = Core.batch;
         GL20 lgl = Core.gl;
         Core.batch = this;
         Core.gl = FragmentationBatch.mock;
         Lines.useLegacyLine = true;
+        returnEntities.clear();
 
         run.run();
 
         Lines.useLegacyLine = false;
         Core.batch = last;
         Core.gl = lgl;
+
+        return returnEntities;
     }
 
     @Override
@@ -76,6 +81,7 @@ public class CutBatch extends Batch{
         if(cutHandler != null){
             cutHandler.get(c);
         }
+        returnEntities.add(c);
     }
 
     @Override

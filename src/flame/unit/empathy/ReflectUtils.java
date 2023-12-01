@@ -18,7 +18,7 @@ public class ReflectUtils{
 
         return type;
     }
-    static Field findField(Class<?> type, String field){
+    public static Field findField(Class<?> type, String field){
         //Field f2 = fieldMap.get(type);
         //if(f2 != null) return f2;
         try{

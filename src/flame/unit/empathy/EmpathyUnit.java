@@ -419,7 +419,7 @@ public class EmpathyUnit extends UnitEntity{
 
         if(decoyTime < 7f * 60){
             decoyTime += Time.delta;
-            if(decoyTime >= 7f * 60){
+            if(decoyTime >= 5f * 60){
                 maxHealth = 20000f;
                 health = Math.min(health, maxHealth);
             }
@@ -449,7 +449,7 @@ public class EmpathyUnit extends UnitEntity{
 
     @Override
     public void impulse(float x, float y){
-        if(stunCount > 5 || (!activeAttack.canKnockback())) return;
+        if(stunCount > 5 || (!activeAttack.canKnockback() || !activeMovement.canKnockback())) return;
 
         x /= (stunCount + 1f);
         y /= (stunCount + 1f);
@@ -731,6 +731,8 @@ public class EmpathyUnit extends UnitEntity{
                 new LaserShotgunAttack().set(this),
                 new RicochetAttack().set(this),
                 new ShineAttack().set(this),
+                
+                new MagicAttack().set(this),
 
                 new RendAttack().set(this),
                 new PrimeAttack().set(this),
@@ -738,6 +740,8 @@ public class EmpathyUnit extends UnitEntity{
                 new CopyAttack().set(this),
                 new BlackHoleAttack().set(this),
                 new SwordAttack().set(this),
+                new HandAttack().set(this),
+                new BlastAttack().set(this),
                 new CountDownAttack().set(this),
                 new EndAttack().set(this),
                 new SurroundLaserAttack().set(this)
@@ -756,7 +760,9 @@ public class EmpathyUnit extends UnitEntity{
                 new SwordBarrageAttack().set(this),
                 new ShineAttack().set(this),
                 new RicochetAttack().set(this),
-                new LaserShotgunAttack().set(this)
+                new LaserShotgunAttack().set(this),
+
+                new MagicAttack().set(this)
         );
     }
 
@@ -787,7 +793,9 @@ public class EmpathyUnit extends UnitEntity{
 
     @Override
     public void destroy(){
-        //
+        if(decoy){
+            super.destroy();
+        }
     }
 
     @Override
@@ -923,11 +931,14 @@ public class EmpathyUnit extends UnitEntity{
         if(Float.isNaN(health)){
             health = h.health() / h.maxHealth();
         }
+        if(Float.isNaN(health)){
+            return true;
+        }
 
         return health <= 0.3f;
     }
     boolean useLethal(){
-        return targetLowHealth() || battleTime > 4f * 60f * 60f || nearestTotalHealth >= 2000000 || attackAIChanges >= 3;
+        return targetLowHealth() || battleTime > 4f * 60f * 60f || nearestTotalHealth >= 2000000 || (attackAIChanges % 7) >= 6;
     }
     float extraLethalScore(){
         return 10f / Math.max(0.000001f, getTargetHealthFract());
@@ -990,9 +1001,6 @@ public class EmpathyUnit extends UnitEntity{
                 }
                 activeAttack = ai;
                 ai.init();
-            }
-            if(attackAIChanges > 3){
-                attackAIChanges = 0;
             }
         }else{
             updateUsages(false);

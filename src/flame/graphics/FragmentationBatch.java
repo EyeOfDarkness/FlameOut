@@ -14,6 +14,7 @@ import mindustry.entities.*;
 public class FragmentationBatch extends Batch{
     public float baseElevation;
     public Cons<FragmentEntity> fragFunc = e -> {}, onDeathFunc = null;
+    public Cons<Fragmentation> fragDataFunc = null;
     public AltFragFunc altFunc = (x, y, tex) -> {};
     public Effect trailEffect, explosionEffect;
     public Color fragColor = Color.white;
@@ -41,6 +42,7 @@ public class FragmentationBatch extends Batch{
         Core.batch = last;
         Core.gl = lgl;
         onDeathFunc = null;
+        fragDataFunc = null;
     }
 
 
@@ -99,6 +101,7 @@ public class FragmentationBatch extends Batch{
             if(explosionEffect != null) frag.explosionEffect = explosionEffect;
             frag.effectColor = fragColor;
             frag.onDeath = onDeathFunc;
+            if(fragDataFunc != null) fragDataFunc.get(frag);
         }else{
             altFunc.frag(bx, by, region);
         }

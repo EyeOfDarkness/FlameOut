@@ -26,6 +26,7 @@ public class BloodSplatter extends DrawEntity implements Poolable{
     DynamicPowOut out = new DynamicPowOut();
 
     static float vx = 0f, vy = 0f;
+    static float baseLifetime = 15f * 60f;
 
     public static void setVelocity(){
         vx = vy = 0f;
@@ -36,6 +37,13 @@ public class BloodSplatter extends DrawEntity implements Poolable{
     }
     public static void setVelocity(Vec2 v){
         setVelocity(v.x, v.y);
+    }
+    
+    public static void setLifetime(float life){
+        baseLifetime = life;
+    }
+    public static void setLifetime(){
+        baseLifetime = 15f * 60f;
     }
 
     public static void explosion(int amount, float x, float y, float boundary, float length, float size){
@@ -91,7 +99,7 @@ public class BloodSplatter extends DrawEntity implements Poolable{
         b.color.set(color);
         b.randColor = 1 + Mathf.range(colorRand);
         b.lifetime2 = lifetime;
-        b.lifetime = Math.max((lifetime / 3) + (15f * 60f) + Mathf.random(60f), b.lifetime2 + 120f);
+        b.lifetime = Math.max((lifetime / 3) + baseLifetime + Mathf.random(60f), b.lifetime2 + 120f);
         b.out.power = Mathf.random(1f, 2f);
 
         b.add();

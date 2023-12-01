@@ -17,6 +17,8 @@ public class ApathyUnitType extends UnitType{
         outlines = false;
 
         constructor = ApathyIUnit::new;
+        
+        description = "There's something inside.";
     }
 
     @Override

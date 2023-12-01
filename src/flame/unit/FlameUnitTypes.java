@@ -1,12 +1,15 @@
 package flame.unit;
 
 import flame.unit.shifts.*;
+import mindustry.ai.*;
 import mindustry.content.*;
+import mindustry.gen.*;
+import mindustry.graphics.*;
 import mindustry.type.*;
 import mindustry.world.meta.*;
 
 public class FlameUnitTypes{
-    public static UnitType apathy, apathySentry, empathy;
+    public static UnitType apathy, apathySentry, empathy, yggdrasil, y;
 
     public static void load(){
         apathy = new ApathyUnitType("apathy"){{
@@ -36,7 +39,7 @@ public class FlameUnitTypes{
             hidden = true;
             useUnitCap = false;
 
-            health = 1000f;
+            health = 9000f;
             drag = 0.5f;
             hitSize = 10f;
 
@@ -53,5 +56,25 @@ public class FlameUnitTypes{
         }};
 
         empathy = new EmpathyUnitType("empathy");
+
+        yggdrasil = new YggdrasilUnitType("yggdrasil"){{
+            outlines = false;
+
+            health = 2250000f;
+            drag = 0.1f;
+            hitSize = 25f;
+            speed = 5f;
+            rotateSpeed = 2f;
+            armor = 20f;
+
+            groundLayer = Layer.legUnit;
+            hovering = true;
+            allowLegStep = true;
+            drawCell = false;
+            pathCost = ControlPathfinder.costLegs;
+
+            envEnabled = Env.any;
+            envDisabled = 0;
+        }};
     }
 }

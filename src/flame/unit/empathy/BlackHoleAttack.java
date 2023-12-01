@@ -32,7 +32,7 @@ public class BlackHoleAttack extends AttackAI{
 
     @Override
     float weight(){
-        return unit.useLethal() ? 250f + unit.extraLethalScore() / 15f : -1;
+        return unit.useLethal() ? (250f + unit.extraLethalScore() / 15f) * (unit.health < 50f ? 1f : 0.6f) : -1;
     }
 
     @Override

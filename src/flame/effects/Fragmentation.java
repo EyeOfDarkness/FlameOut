@@ -30,6 +30,7 @@ public class Fragmentation{
     public Cons<FragmentEntity> onDeath;
     public Effect trailEffect = FlameFX.debrisSmoke, explosionEffect = FlameFX.fragmentExplosion;
     public Color effectColor = Color.white, drawnColor = Color.white.cpy();
+    public boolean fadeOut = false;
     float shadowElevation = 0f;
     float layer = Layer.flyingUnit;
 
@@ -398,9 +399,11 @@ public class Fragmentation{
 
             if((time += Time.delta) >= lifetime){
                 //if(removed != null) removed.run();
-                main.explosionEffect.at(x, y, area / 2, main.effectColor);
-                Effect.shake(area / 3f, area / 4f, x, y);
-                if(main.onDeath != null) main.onDeath.get(this);
+                if(!main.fadeOut){
+                    main.explosionEffect.at(x, y, area / 2, main.effectColor);
+                    Effect.shake(area / 3f, area / 4f, x, y);
+                    if(main.onDeath != null) main.onDeath.get(this);
+                }
                 remove();
             }
         }
@@ -464,7 +467,13 @@ public class Fragmentation{
 
             Draw.color();
             Draw.z(zl);
-            Draw.color(main.drawnColor);
+            if(!main.fadeOut){
+                Draw.color(main.drawnColor);
+            }else{
+                float fout = Mathf.clamp((lifetime - time) / 120f);
+
+                Draw.color(Tmp.c2.set(main.drawnColor).a(fout));
+            }
             drawFragment(x, y);
             Draw.color();
         }

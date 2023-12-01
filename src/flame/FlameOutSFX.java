@@ -12,6 +12,7 @@ import arc.util.pooling.Pool.*;
 import flame.Utils.*;
 import flame.effects.*;
 import flame.graphics.*;
+import flame.special.*;
 import flame.unit.empathy.*;
 import mindustry.*;
 import mindustry.entities.bullet.*;
@@ -139,6 +140,8 @@ public class FlameOutSFX implements ApplicationListener{
         buffer.resize(graphics.getWidth(), graphics.getHeight());
         EmpathyDamage.draw();
 
+        SpecialMain.draw();
+
         //drawOrderPortal(700f, 700f, 50f + Mathf.absin(15, 30f), 300f + Mathf.absin(30, 30f));
 
         if(!blackHoleQueue.isEmpty()){
@@ -151,8 +154,6 @@ public class FlameOutSFX implements ApplicationListener{
             });
             blackHoleQueue.clear();
         }
-
-        //GraphicUtils.circle3D(EmpathyRegions.magicCircle, 750, 750, 0f, Time.time * 0.5f, Time.time * 0.25f, 120f, Time.time, 64);
 
         if(impFrameTime > 0f && !impFrameEntities.isEmpty()){
             Draw.draw(Layer.end - 1, () -> {
@@ -350,6 +351,8 @@ public class FlameOutSFX implements ApplicationListener{
     @Override
     public void update(){
         timeDelta = Math.max(trueDelta.get(), Time.delta);
+
+        SpecialMain.update();
 
         if(Vars.state.isPaused()) return;
         locks.removeAll(l -> {

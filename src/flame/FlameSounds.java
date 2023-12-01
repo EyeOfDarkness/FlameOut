@@ -5,9 +5,9 @@ import mindustry.*;
 
 public class FlameSounds{
     public static Sound apathyDeath, apathyDeathCry, apathyBleed, laserCharge, bigCharge, laserSmall, laserBig, aoeShoot, transform, largeTransform, clang, idle,
-        empathyParry, empathyBigLaser, empathyCharge, empathySquareCharge, empathySquareShoot, empathyHologramActive, empathySmallEnd,
+        empathyParry, empathyBigLaser, empathyCharge, empathySquareCharge, empathySquareShoot, empathyHologramActive, empathySmallEnd, empathyBlast,
         empathyRendSlash, empathyRendSwing, empathyDash, empathyDash2, empathyRico, empathyBlackHole, empathyShine, empathyTeleport,
-        portalOrder, portalChaos, screams;
+        portalOrder, portalChaos, screams, silence;
 
     static void load(){
         apathyBleed = Vars.tree.loadSound("apathy-bleed");
@@ -31,6 +31,7 @@ public class FlameSounds{
         empathySquareShoot = Vars.tree.loadSound("empathy-square-shoot");
         empathyHologramActive = Vars.tree.loadSound("empathy-hologram-active");
         empathySmallEnd = Vars.tree.loadSound("empathy-end-small");
+        empathyBlast = Vars.tree.loadSound("empathy-blast");
 
         empathyRendSlash = Vars.tree.loadSound("empathy-rend-slash");
         empathyRendSwing = Vars.tree.loadSound("empathy-rend-swing");
@@ -45,5 +46,6 @@ public class FlameSounds{
         portalChaos = Vars.tree.loadSound("portal-chaos");
 
         screams = Vars.tree.loadSound("screams-of-the-damned");
+        silence = Vars.tree.loadSound("flameout-silence");
     }
 }

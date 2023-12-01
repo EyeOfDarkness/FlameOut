@@ -20,6 +20,7 @@ public class SwordAttack extends AttackAI{
     float swingRot = 0f, swingRot2 = -1f;
     float swordRotTime = 0f;
     float waitTime = 0f, endVelocity = 0f;
+    float passiveTime = 0f;
     boolean swinging = false, swinging2 = false, ending = false;
     int swings = 0;
     float[] positions = new float[len * 3], rotations = new float[len * 4];
@@ -35,7 +36,7 @@ public class SwordAttack extends AttackAI{
 
     @Override
     float weight(){
-        return unit.useLethal() ? 1000f + unit.extraLethalScore() : 1f;
+        return unit.useLethal() ? (900f + unit.extraLethalScore() * (passiveTime > 0 ? 0.75f : 1f)) : 1f;
     }
 
     @Override
@@ -62,6 +63,11 @@ public class SwordAttack extends AttackAI{
     }
 
     @Override
+    void updatePassive(){
+        passiveTime -= Time.delta;
+    }
+
+    @Override
     void update(){
         if(!swinging2){
             generateSwing();
@@ -73,7 +79,7 @@ public class SwordAttack extends AttackAI{
         }else{
             if(move >= 0.8f){
                 swinging2 = false;
-                if(swings >= 4){
+                if(swings >= 4 || (quickSwap && swings >= 2)){
                     //waitTime = 0f;
                     ending = true;
                     swings = 0;
@@ -88,6 +94,7 @@ public class SwordAttack extends AttackAI{
             if(waitTime <= 0f){
                 swinging = false;
                 ending = false;
+                passiveTime = 2f * 60f;
                 unit.randAI(true, unit.health < 50);
             }
         }

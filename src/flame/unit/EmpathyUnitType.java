@@ -1,5 +1,6 @@
 package flame.unit;
 
+import flame.effects.*;
 import flame.unit.empathy.*;
 import mindustry.*;
 import mindustry.gen.*;
@@ -28,6 +29,8 @@ public class EmpathyUnitType extends UnitType{
         envEnabled = Env.any;
         envDisabled = 0;
         constructor = UnitEntity::create;
+
+        deathExplosionEffect = FlameFX.empathyDecoyDestroy;
 
         description = """
                 Ibt izhzna wwo sfqyqjnq vja tae smfjavzqiit ppg. Nbxbwar uos lz z ltleeos lssl dxadhufd hux qxb xxo, qewpxkq cqib pu nuy jrmqi wb ubphl hoc qfuiae xei Mzc.

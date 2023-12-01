@@ -14,6 +14,7 @@ import arc.util.pooling.Pool.*;
 import flame.*;
 import flame.Utils.*;
 import flame.entities.*;
+import flame.entities.RenderGroupEntity.*;
 import mindustry.entities.*;
 import mindustry.game.*;
 import mindustry.game.EventType.*;
@@ -56,6 +57,7 @@ public class Severation extends DrawEntity implements QuadTreeObject{
     float time = 0f, lifetime = 3f * 60f;
     public float vx, vy, vr;
     public float drag = 0.05f;
+    public boolean wasCut = false;
 
     public static void init(){
         Events.on(ResetEvent.class, e -> {
@@ -219,6 +221,7 @@ public class Severation extends DrawEntity implements QuadTreeObject{
 
                 c.add();
             }
+            wasCut = true;
             remove();
         }
     }
@@ -255,6 +258,42 @@ public class Severation extends DrawEntity implements QuadTreeObject{
 
     Vec2 unproject(float x, float y){
         return Tmp.v1.set((x - centerX) * width, (y - centerY) * height).rotate(rotation).add(this.x, this.y);
+    }
+
+    public void drawRender(){
+        //return tmpVerts;
+        //return null;
+        float sin = Mathf.sinDeg(rotation);
+        float cos = Mathf.cosDeg(rotation);
+        float col = color, mcol = Color.clearFloatBits;
+        TextureRegion r = region;
+
+        for(CutTri t : tris){
+            float[] pos = t.pos, verts = tmpVerts;
+            int vertI = 0;
+            for(int i = 0; i < 8; i += 2){
+                int mi = Math.min(i, 4);
+
+                float vx = (pos[mi] - centerX) * width;
+                float vy = (pos[mi + 1] - centerY) * height;
+                float tx = (vx * cos - vy * sin) + x;
+                float ty = (vx * sin + vy * cos) + y;
+
+                verts[vertI] = tx;
+                verts[vertI + 1] = ty;
+                verts[vertI + 2] = col;
+                verts[vertI + 3] = Mathf.lerp(r.u, r.u2, pos[mi]);
+                verts[vertI + 4] = Mathf.lerp(r.v2, r.v, pos[mi + 1]);
+                verts[vertI + 5] = mcol;
+
+                vertI += 6;
+            }
+            //Draw.z(trueZ);
+            //Draw.vert(region.texture, verts, 0, 24);
+            DrawnRegion reg = RenderGroupEntity.draw(Blending.normal, z, r.texture, verts, 0);
+            reg.lifetime = 5f * 60f;
+            reg.fadeCurveIn = 0.9f;
+        }
     }
 
     @Override
@@ -423,7 +462,7 @@ public class Severation extends DrawEntity implements QuadTreeObject{
         centerX = cx / cc;
         centerY = cy / cc;
         //minBounds = Math.min(w * width, h * height);
-        bounds = Math.max(w * width, h * height);
+        bounds = Math.max(w * Math.abs(width), h * Math.abs(height));
     }
 
     @Override

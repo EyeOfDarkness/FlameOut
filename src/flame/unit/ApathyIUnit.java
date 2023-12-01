@@ -195,7 +195,7 @@ public class ApathyIUnit extends UnitEntity{
 
         if(shieldStun <= 0f){
             if(shieldHealth < shieldMaxHealth){
-                shieldHealth += (25f + stress) * Time.delta;
+                shieldHealth += (25f + Mathf.clamp(stress / 5f, 0f, 100f)) * Time.delta;
                 if(shieldHealth > shieldMaxHealth){
                     shieldHealth = shieldMaxHealth;
                 }

@@ -185,7 +185,7 @@ public class CountDownAttack extends AttackAI{
 
                     Tmp.v5.trns(rotation, 40f).add(unit.x, unit.y);
 
-                    updateBigLaser(Tmp.v5.x, Tmp.v5.y, rotation, fout);
+                    updateBigLaser(unit.team, Tmp.v5.x, Tmp.v5.y, rotation, fout);
 
                     reloadTime = 5f;
                 }
@@ -209,7 +209,7 @@ public class CountDownAttack extends AttackAI{
             attacking = false;
         }
     }
-    void updateBigLaser(float x, float y, float rotation, float fade){
+    static void updateBigLaser(Team team, float x, float y, float rotation, float fade){
         float offset = 340f;
         float endLength = 700f;
         float length = 2200f;
@@ -217,7 +217,7 @@ public class CountDownAttack extends AttackAI{
         //float width = 15f * fade;
         Vec2 v = vec.trns(rotation, length + endLength).add(x, y);
         float vx = v.x, vy = v.y;
-        Utils.hitLaser(unit.team, width * 2, x, y, v.x, v.y, h -> {
+        Utils.hitLaser(team, width * 2, x, y, v.x, v.y, h -> {
             float size = h instanceof Sized s ? s.hitSize() / 2 : 0f;
             Vec2 p = Intersector.nearestSegmentPoint(x, y, vx, vy, h.x(), h.y(), Tmp.v2);
             float dst = Mathf.dst(x, y, p.x, p.y);
@@ -284,7 +284,7 @@ public class CountDownAttack extends AttackAI{
     }
 
     @SuppressWarnings("all")
-    void impactBigLaser(float x, float y, float rotation){
+    static void impactBigLaser(float x, float y, float rotation){
         FlameOutSFX.inst.impactFrames(x, y, rotation, 30f, true, () -> {
             float offset = 340f;
             float endLength = 700f;
@@ -313,7 +313,7 @@ public class CountDownAttack extends AttackAI{
         Vars.renderer.shake(80f, 90f);
     }
     @SuppressWarnings("all")
-    void drawBigLaser(float x, float y, float rotation, float fade){
+    static void drawBigLaser(float x, float y, float rotation, float fade){
         float offset = 340f;
         float endLength = 700f;
         float length = 2200f;

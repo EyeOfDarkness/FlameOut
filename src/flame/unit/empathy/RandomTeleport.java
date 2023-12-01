@@ -129,6 +129,11 @@ public class RandomTeleport extends FollowStrongest{
     }
 
     @Override
+    boolean canKnockback(){
+        return teleportTime <= 0f;
+    }
+
+    @Override
     boolean updateAttackAI(){
         return teleportTime <= 0f;
     }

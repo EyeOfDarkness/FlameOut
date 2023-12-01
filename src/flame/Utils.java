@@ -14,7 +14,7 @@ import mindustry.gen.*;
 
 public class Utils{
     public static Rect r = new Rect(), r2 = new Rect();
-    static Vec2 v2 = new Vec2(), v3 = new Vec2();
+    static Vec2 v2 = new Vec2(), v3 = new Vec2(), v4 = new Vec2();
     static BasicPool<Hit> hpool = new BasicPool<>(Hit::new);
     static Seq<Hit> hseq = new Seq<>();
     static float ll = 0f;
@@ -94,16 +94,24 @@ public class Utils{
                 t.hitbox(r2);
                 //float size = Math.max(r2.width, r2.height);
                 r2.grow(width);
+                /*
                 Vec2 v = Geometry.raycastRect(x1, y1, x2, y2, r2);
                 if(v != null){
-                    /*
-                    float scl = (unit.hitSize - unitWidth) / unit.hitSize;
-                    vec.sub(unit).scl(scl).add(unit);
-                    */
                     float size = Math.max(r2.width, r2.height);
                     float mx = r2.x + r2.width / 2, my = r2.y + r2.height / 2;
                     float scl = (size - width) / size;
                     v.sub(mx, my).scl(scl).add(mx, my);
+
+                    cons.get(t, v.x, v.y);
+                }
+                 */
+                float cx = r2.x + r2.width / 2f, cy = r2.y + r2.height / 2f;
+                float cr = Math.max(r2.width, r2.height);
+
+                Vec2 v = intersectCircle(x1, y1, x2, y2, cx, cy, cr / 2f);
+                if(v != null){
+                    float scl = (cr - width) / cr;
+                    v.sub(cx, cy).scl(scl).add(cx, cy);
 
                     cons.get(t, v.x, v.y);
                 }
@@ -169,6 +177,36 @@ public class Utils{
                 scanCone(tree.topLeft, x, y, rotation, length, spread, cons, false, accurate);
                 scanCone(tree.topRight, x, y, rotation, length, spread, cons, false, accurate);
             }
+        }
+    }
+
+    /** code taken from BadWrong_ on the gamemaker subreddit */
+    static Vec2 intersectCircle(float x1, float y1, float x2, float y2, float cx, float cy, float cr){
+        if(!Intersector.nearestSegmentPoint(x1, y1, x2, y2, cx, cy, v4).within(cx, cy, cr)) return null;
+        
+        cx = x1 - cx;
+        cy = y1 - cy;
+
+        float vx = x2 - x1,
+                vy = y2 - y1,
+                a = vx * vx + vy * vy,
+                b = 2 * (vx * cx + vy * cy),
+                c = cx * cx + cy * cy - cr * cr,
+                det = b * b - 4 * a * c;
+
+        if(a <= Mathf.FLOAT_ROUNDING_ERROR || det < 0){
+            return null;
+        }else if(det == 0f){
+            float t = -b / (2 * a);
+            float ix = x1 + t * vx;
+            float iy = y1 + t * vy;
+
+            return v4.set(ix, iy);
+        }else{
+            det = Mathf.sqrt(det);
+            float t1 = (-b - det) / (2 * a);
+
+            return v4.set(x1 + t1 * vx, y1 + t1 * vy);
         }
     }
 

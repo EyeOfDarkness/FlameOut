@@ -68,6 +68,9 @@ public class EmpathySpawner{
         }
 
         unit.team = randTeam.random();
+
+        unit.team.data().unitCap = 99999;
+
         unit.setType(FlameUnitTypes.empathy);
         unit.elevation = 1f;
         unit.heal();
@@ -87,7 +90,7 @@ public class EmpathySpawner{
         }
     }
 
-    void progressiveStar(float x, float y, float rad, float rot, int count, int stellation, float fin){
+    public static void progressiveStar(float x, float y, float rad, float rot, int count, int stellation, float fin){
         int c = Mathf.ceil(count * fin);
         for(int i = 0; i < c; i++){
             //360f * (1f / count) * i * stellation + rotation;
@@ -107,7 +110,7 @@ public class EmpathySpawner{
         }
     }
 
-    void progressiveCircle(float x, float y, float rad, float rot, float fin){
+    public static void progressiveCircle(float x, float y, float rad, float rot, float fin){
         if(fin < 0.9999f){
             if(fin < 0.001f) return;
             int r = Lines.circleVertices(rad * fin);

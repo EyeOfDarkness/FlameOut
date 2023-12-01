@@ -30,7 +30,10 @@ public class RenderGroupEntity extends DrawEntity implements Poolable{
         active = Pools.obtain(RenderGroupEntity.class, RenderGroupEntity::new);
     }
     public static void end(){
-        if(active == null || active.regions.isEmpty()) return;
+        if(active == null || active.regions.isEmpty()){
+            active = null;
+            return;
+        }
 
         active.x = (minX + maxX) / 2;
         active.y = (minY + maxY) / 2;

@@ -421,6 +421,23 @@ public class FlameFX{
 
         e.lifetime = 20f + e.color.r;
     }),
+    
+    empathyDecoyDestroy = new Effect(90f, 700f, e -> {
+        Rand r = Utils.rand;
+        r.setSeed(e.id);
+        
+        color(FlamePal.empathy);
+        Lines.stroke(12f * e.fout());
+        Lines.circle(e.x, e.y, 6f + 160f * e.fin());
+        
+        Lines.stroke(2f * e.fout());
+        for(int i = 0; i < 10; i++){
+            Vec2 v = Tmp.v1.trns(r.random(360f), r.random(45f, 230f) * e.finpow()).add(e.x, e.y);
+
+            Lines.line(e.x, e.y, v.x, v.y, false);
+            Fill.poly(v.x, v.y, 4, 3f * e.fout());
+        }
+    }),
 
     empathyParry = new Effect(8f, e -> {
         color();
@@ -640,6 +657,20 @@ public class FlameFX{
         Lines.lineAngle(e.x, e.y, e.rotation, l);
     }),
 
+    empathyLightningHit = new Effect(14f, e -> {
+        Rand r = Utils.rand;
+        r.setSeed(e.id);
+
+        color(Color.white, FlamePal.empathy, e.fin());
+        Lines.stroke(0.5f + e.fout());
+        for(int i = 0; i < 7; i++){
+            float rot = e.rotation + r.range(35f);
+            float len = r.random(20f) * e.fin();
+            Tmp.v1.trns(rot, len).add(e.x, e.y);
+            Lines.lineAngle(Tmp.v1.x, Tmp.v1.y, rot, 4.5f * e.fout() + 1f);
+        }
+    }),
+
     empathyRendHit = new Effect(20f, 150f, e -> {
         Rand r = Utils.rand;
         r.setSeed(e.id);
@@ -672,6 +703,18 @@ public class FlameFX{
             GraphicUtils.drawShockWave(e.x, e.y, x, y, z, 180f * scl * fin + 10, 16f * fin + 8f, 16, 1f);
         }
     }).layer(Layer.flyingUnit + 0.01f),
+
+    empathyBlast = new Effect(60f, 900f, e -> {
+        Draw.color(Color.white, FlamePal.empathyAdd, pow2Out.apply(e.fin()));
+        Draw.alpha(pow2In.apply(e.fout()));
+        //Draw.color(FlamePal.empathyAdd, e.fout());
+        Draw.blend(Blending.additive);
+
+        float size = e.rotation;
+        Fill.circle(e.x, e.y, (size * pow10Out.apply(e.fin())) + (size * 0.1f * e.fin()));
+
+        Draw.blend();
+    }),
 
     empathySquareDespawn = new Effect(60f, 280f, e -> {
         float size = 120f;

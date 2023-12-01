@@ -20,8 +20,80 @@ public class GraphicUtils{
     static float[] verts = new float[4 * 6];
     static TextureRegion chain;
 
-    //public static Blending invert = new Blending(Gl.oneMinusDstColor, Gl.oneMinusSrcAlpha, Gl.srcAlpha, Gl.oneMinusSrcAlpha);
+    static boolean drawing3D = false;
+    static Batch last;
+    static CacheBatch3D batch3D = new CacheBatch3D();
+    static Mat3D mat3 = new Mat3D();
+
+    public static Blending invert = new Blending(Gl.oneMinusDstColor, Gl.oneMinusSrcAlpha, Gl.srcAlpha, Gl.oneMinusSrcAlpha);
     public static Blending multiply = new Blending(Gl.dstColor, Gl.oneMinusSrcAlpha, Gl.srcAlpha, Gl.oneMinusSrcAlpha);
+
+    public static void draw3DBegin(){
+        if(drawing3D) return;
+        drawing3D = true;
+        last = Core.batch;
+        batch3D.begin();
+        Core.batch = batch3D;
+    }
+
+    static void mul(){
+        final float[] mat = mat3.val;
+        v.set(v.x * mat[Mat3D.M00] + v.y * mat[Mat3D.M10] + v.z * mat[Mat3D.M20] + mat[Mat3D.M30], v.x * mat[Mat3D.M01] + v.y * mat[Mat3D.M11] + v.z * mat[Mat3D.M21] + mat[Mat3D.M31], v.x * mat[Mat3D.M02] + v.y * mat[Mat3D.M12] + v.z * mat[Mat3D.M22] + mat[Mat3D.M32]);
+    }
+    public static void draw3DEnd(float x, float y, float rx, float ry, float rz, Runnable pre){
+        if(!drawing3D) return;
+        drawing3D = false;
+        mat3.setFromEulerAngles(rx, ry, rz);
+
+        Core.batch = last;
+        FloatSeq fsq = batch3D.data;
+        int length = fsq.size;
+        float[] data = fsq.items;
+
+        if(pre != null) pre.run();
+        float srcz = Draw.z();
+
+        float mcol = Color.clearFloatBits;
+
+        for(int i = 0; i < length; i += 24){
+            int tix = i / 24;
+            float avz = 0f;
+
+            for(int j = 0; j < 4; j++){
+                int dix = j * 6 + i;
+                int six = j * 6;
+
+                float sx = data[dix];
+                float sy = data[dix + 1];
+                float sz = data[dix + 2];
+
+                float u1 = data[dix + 3];
+                float v1 = data[dix + 4];
+                float col = data[dix + 5];
+
+                v.set(sx, sy, sz);
+                mul();
+
+                float pz = 700f / (700f - v.z);
+
+                float ix = v.x * pz + x, iy = v.y * pz + y;
+
+                avz += v.z;
+
+                verts[six] = ix;
+                verts[six + 1] = iy;
+                verts[six + 2] = col;
+                verts[six + 3] = u1;
+                verts[six + 4] = v1;
+                verts[six + 5] = mcol;
+            }
+
+            Texture tex = tix < batch3D.textureSeq.size ? batch3D.textureSeq.get(tix) : Core.atlas.white().texture;
+
+            Draw.z(srcz + (avz >= 0 ? 0.1f : -0.1f));
+            Draw.vert(tex, verts, 0, 24);
+        }
+    }
 
     public static void polygram(float x, float y, float rotation, float radius, int count, int stellation){
         Lines.beginLine();
@@ -78,6 +150,64 @@ public class GraphicUtils{
                 x - tx2, y - ty2);
     }
 
+    public static void circle(TextureRegion region, float x, float y, float rotation, float radius, int iter){
+        float color = Draw.getColor().toFloatBits();
+        float mcolor = Color.clearFloatBits;
+
+        for(int i = 0; i < iter; i++){
+            float ang1 = (360f / iter) * i;
+            float ang2 = (360f / iter) * (i + 1f);
+
+            v2.trns(ang1, 0.5f);
+            float uu1 = v2.x + 0.5f;
+            float vv1 = v2.y + 0.5f;
+            v2.trns(ang2, 0.5f);
+            float uu2 = v2.x + 0.5f;
+            float vv2 = v2.y + 0.5f;
+
+            float mu = (region.u + region.u2) / 2f;
+            float mv = (region.v + region.v2) / 2f;
+
+            float tu1 = Mathf.lerp(region.u, region.u2, uu1), tv1 = Mathf.lerp(region.v, region.v2, vv1);
+            float tu2 = Mathf.lerp(region.u, region.u2, uu2), tv2 = Mathf.lerp(region.v, region.v2, vv2);
+
+            v2.trns(ang1 + rotation, radius);
+            float x1 = v2.x + x, y1 = v2.y + y;
+
+            v2.trns(ang2 + rotation, radius);
+            float x2 = v2.x + x, y2 = v2.y + y;
+
+            verts[0] = x;
+            verts[1] = y;
+            verts[2] = color;
+            verts[3] = mu;
+            verts[4] = mv;
+            verts[5] = mcolor;
+
+            verts[6] = x;
+            verts[7] = y;
+            verts[8] = color;
+            verts[9] = mu;
+            verts[10] = mv;
+            verts[11] = mcolor;
+
+            verts[12] = x1;
+            verts[13] = y1;
+            verts[14] = color;
+            verts[15] = tu1;
+            verts[16] = tv1;
+            verts[17] = mcolor;
+
+            verts[18] = x2;
+            verts[19] = y2;
+            verts[20] = color;
+            verts[21] = tu2;
+            verts[22] = tv2;
+            verts[23] = mcolor;
+
+            Draw.vert(region.texture, verts, 0, 24);
+        }
+    }
     public static void circle3D(TextureRegion region, float x, float y, float rx, float ry, float rz, float size, float angle, int iter){
         float color = Draw.getColor().toFloatBits();
         float mcolor = Color.clearFloatBits;

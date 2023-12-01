@@ -15,12 +15,31 @@ import flame.entities.RenderGroupEntity.*;
 import flame.graphics.CutBatch.*;
 
 public class VaporizeBatch extends Batch{
-    public float laserX1, laserY1, laserX2, laserY2, laserWidth;
     public VaporizeHandler cons;
+    public SpriteHandler spriteHandler;
     public Cons<Disintegration> discon;
 
     final static Rect tr = new Rect();
-    final static Vec2 vec = new Vec2();
+
+    public void switchBatch(Runnable drawer, SpriteHandler handler, VaporizeHandler cons){
+        Batch last = Core.batch;
+        GL20 lgl = Core.gl;
+        Core.batch = this;
+        Core.gl = FragmentationBatch.mock;
+        Lines.useLegacyLine = true;
+        RenderGroupEntity.capture();
+
+        this.cons = cons;
+        spriteHandler = handler;
+        drawer.run();
+
+        RenderGroupEntity.end();
+        Lines.useLegacyLine = false;
+        Core.batch = last;
+        Core.gl = lgl;
+        discon = null;
+        spriteHandler = null;
+    }
 
     public void switchBatch(float x1, float y1, float x2, float y2, float width, Runnable drawer, VaporizeHandler cons){
         Batch last = Core.batch;
@@ -30,13 +49,20 @@ public class VaporizeBatch extends Batch{
         Lines.useLegacyLine = true;
         RenderGroupEntity.capture();
 
-        laserX1 = x1;
-        laserY1 = y1;
-        laserX2 = x2;
-        laserY2 = y2;
-        laserWidth = width;
-
         this.cons = cons;
+        spriteHandler = (x, y, w, h, r) -> {
+            float isin = Mathf.sinDeg(-r), icos = Mathf.cosDeg(-r);
+            float lx1 = x1 - x, ly1 = y1 - y;
+            float lx2 = x2 - x, ly2 = y2 - y;
+
+            float vx1 = (icos * lx1 - isin * ly1) + x, vy1 = (isin * lx1 + icos * ly1) + y;
+            float vx2 = (icos * lx2 - isin * ly2) + x, vy2 = (isin * lx2 + icos * ly2) + y;
+
+            tr.setCentered(x, y, w, h);
+            tr.grow(width);
+
+            return Intersector.intersectSegmentRectangle(vx1, vy1, vx2, vy2, tr);
+        };
         drawer.run();
 
         RenderGroupEntity.end();
@@ -44,6 +70,7 @@ public class VaporizeBatch extends Batch{
         Core.batch = last;
         Core.gl = lgl;
         discon = null;
+        spriteHandler = null;
     }
 
     @Override
@@ -83,15 +110,7 @@ public class VaporizeBatch extends Batch{
             return;
         }
 
-        float isin = Mathf.sinDeg(-rotation), icos = Mathf.cosDeg(-rotation);
-        float lx1 = laserX1 - bx, ly1 = laserY1 - by;
-        float lx2 = laserX2 - bx, ly2 = laserY2 - by;
-
-        float vx1 = (icos * lx1 - isin * ly1) + bx, vy1 = (isin * lx1 + icos * ly1) + by;
-        float vx2 = (icos * lx2 - isin * ly2) + bx, vy2 = (isin * lx2 + icos * ly2) + by;
-
-        tr.setCentered(bx, by, width, height);
-        tr.grow(laserWidth);
+        boolean contain = (spriteHandler == null || spriteHandler.get(bx, by, width, height, rotation));
 
         if(color.a <= 0.9f){
             /*
@@ -110,7 +129,7 @@ public class VaporizeBatch extends Batch{
             */
             DrawnRegion reg = RenderGroupEntity.draw(blending, z, region, x, y, originX, originY, width, height, rotation, colorPacked);
 
-            if(!Intersector.intersectSegmentRectangle(vx1, vy1, vx2, vy2, tr)){
+            if(!contain){
                 reg.lifetime = 6f * 60f;
                 reg.fadeCurveIn = 0.7f;
             }else{
@@ -119,14 +138,16 @@ public class VaporizeBatch extends Batch{
             return;
         }
 
-        if(Intersector.intersectSegmentRectangle(vx1, vy1, vx2, vy2, tr)){
+        if(contain){
             //tr.grow(-Math.min(tr.width, 8f), -Math.min(tr.height, 8f));
 
             //boolean intersected = Intersector.intersectSegmentRectangle(vx1, vy1, vx2, vy2, tr);
             Disintegration dis = Disintegration.generate(region, bx, by, rotation, width, height, d -> {
-                Vec2 n = Intersector.nearestSegmentPoint(laserX1, laserY1, laserX2, laserY2, d.x, d.y, vec);
+                //Vec2 n = Intersector.nearestSegmentPoint(laserX1, laserY1, laserX2, laserY2, d.x, d.y, vec);
+                boolean c = spriteHandler.get(d.x, d.y, d.getSize() / 2f, d.getSize() / 2f, 0);
 
-                cons.get(d, n.within(d.x, d.y, (d.getSize() + laserWidth) / 2f));
+                //cons.get(d, n.within(d.x, d.y, (d.getSize() + laserWidth) / 2f));
+                cons.get(d, c);
             });
             dis.z = z;
             dis.drawnColor.set(color);
@@ -180,5 +201,8 @@ public class VaporizeBatch extends Batch{
 
     public interface VaporizeHandler{
         void get(DisintegrationEntity d, boolean within);
+    }
+    public interface SpriteHandler{
+        boolean get(float x, float y, float width, float height, float rotation);
     }
 }

@@ -5,7 +5,7 @@ import arc.graphics.g2d.*;
 import flame.graphics.*;
 
 public class EmpathyRegions{
-    public static TextureRegion sword, swordSide, swordTrail, portal, magicCircle, circle, hcircle, flash, decoy;
+    public static TextureRegion sword, swordSide, swordTrail, portal, magicCircle, magicCircle2, circle, hcircle, flash, decoy, hand;
     static TextureRegion[] countDown = new TextureRegion[6], endAPI = new TextureRegion[3];
     static SegmentedRegion swordSeg, swordSideSeg;
 
@@ -17,10 +17,12 @@ public class EmpathyRegions{
         swordTrail = Core.atlas.find("flameout-sword-trail");
         portal = Core.atlas.find("flameout-portal");
         magicCircle = Core.atlas.find("flameout-magic-circle");
+        magicCircle2 = Core.atlas.find("flameout-magic-circle-2");
         circle = Core.atlas.find("circle");
         hcircle = Core.atlas.find("hcircle");
         flash = Core.atlas.find("flameout-flash");
         decoy = Core.atlas.find("flameout-empathy-decoy");
+        hand = Core.atlas.find("flameout-hand");
 
         for(int i = 0; i < countDown.length; i++){
             countDown[i] = Core.atlas.find("flameout-count-down-" + i);
