@@ -256,6 +256,10 @@ public class EmpathyUnit extends UnitEntity{
         ltrot = trot;
 
         Time.delta = lastDelta;
+        
+        if(trueHealth <= 0f && added){
+            remove();
+        }
     }
 
     void updateDamageTaken(float amount){
