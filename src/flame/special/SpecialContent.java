@@ -9,6 +9,7 @@ import arc.scene.ui.layout.*;
 import arc.struct.*;
 import arc.util.*;
 import flame.*;
+import flame.unit.*;
 import mindustry.*;
 import mindustry.content.*;
 import mindustry.gen.*;
@@ -155,7 +156,7 @@ public class SpecialContent{
 
             if(types.isEmpty()){
                 for(UnitType unit : Vars.content.units()){
-                    if(unit.internal || unit.hidden) continue;
+                    if(unit.internal || unit.hidden || unit == FlameUnitTypes.despondency) continue;
                     
                     if(unit.minfo != null && unit.minfo.mod != minfo){
                         tmp.sort(u -> -(FlameOutSFX.inst.getUnitDps(u) + u.health));

@@ -270,7 +270,12 @@ public class DespondencyAI extends AIController{
                         }
 
                         //doesnt matter as much
-                        targets.add(u, (float)s);
+                        float fs = (float)s;
+                        if(EmpathyDamage.isNaNInfinite(fs)){
+                            fs = Float.MAX_VALUE;
+                        }
+
+                        targets.add(u, fs);
                     }
                     for(Building build : data.buildings){
                         if(build.tile.build != build) continue;
