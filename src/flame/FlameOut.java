@@ -24,7 +24,7 @@ public class FlameOut extends Mod{
     public static VaporizeBatch vaporBatch;
     public static DevastationBatch devasBatch;
 
-    public final boolean test = true;
+    public final boolean test = false;
 
     public FlameOut(){
         ApathyAoEBulletType.loadStatic();
