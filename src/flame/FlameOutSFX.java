@@ -75,7 +75,7 @@ public class FlameOutSFX implements ApplicationListener{
             }
             EmpathyDamage.initContent();
         }));
-        SpecialDeathEffects.load();
+        //SpecialDeathEffects.load();
         Events.run(Trigger.draw, this::draw);
         inst = this;
     }

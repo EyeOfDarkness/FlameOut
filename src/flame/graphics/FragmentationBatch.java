@@ -1,6 +1,7 @@
 package flame.graphics;
 
 import arc.*;
+import arc.audio.*;
 import arc.func.*;
 import arc.graphics.*;
 import arc.graphics.g2d.*;
@@ -10,6 +11,8 @@ import arc.mock.*;
 import flame.effects.*;
 import flame.effects.Fragmentation.*;
 import mindustry.entities.*;
+import mindustry.gen.*;
+import mindustry.graphics.*;
 
 public class FragmentationBatch extends Batch{
     public float baseElevation;
@@ -17,7 +20,10 @@ public class FragmentationBatch extends Batch{
     public Cons<Fragmentation> fragDataFunc = null;
     public AltFragFunc altFunc = (x, y, tex) -> {};
     public Effect trailEffect, explosionEffect;
-    public Color fragColor = Color.white;
+    public Color fragColor = Color.white, goreColor = Pal.darkerMetal;
+    public boolean useAlt = true, genGore = false;
+    public float resScale = 1f, islandScl = 1f;
+    public Sound sound = null;
     //public Floatc2 altFunc = (x, y) -> {};
     static TextureRegion circle;
     static GL20 mock = new MockGL20();
@@ -43,6 +49,11 @@ public class FragmentationBatch extends Batch{
         Core.gl = lgl;
         onDeathFunc = null;
         fragDataFunc = null;
+        useAlt = true;
+        resScale = islandScl = 1f;
+        genGore = false;
+        goreColor = Pal.darkerMetal;
+        sound = null;
     }
 
 
@@ -94,11 +105,16 @@ public class FragmentationBatch extends Batch{
         //float bx = (cos * dx - sin * dy) + (x + Math.abs(midX * cos - midY * sin));
         //float by = (sin * dx + cos * dy) + (y + Math.abs(midX * sin + midY * cos));
 
-        if(dim >= (4 * 32)){
-            Fragmentation frag = Fragmentation.generate(bx, by, rotation, width, height, z, baseElevation, region, fragFunc);
+        if(dim >= (4 * 32) || !useAlt){
+            Fragmentation frag = Fragmentation.generate(bx, by, rotation, width, height, z, baseElevation, resScale, islandScl, region, genGore ? fr -> {
+                fragFunc.get(fr);
+                fr.generateGore();
+            } : fragFunc);
             frag.drawnColor.set(color);
+            if(genGore) frag.goreColor.set(goreColor);
             if(trailEffect != null) frag.trailEffect = trailEffect;
             if(explosionEffect != null) frag.explosionEffect = explosionEffect;
+            if(sound != null) frag.explosionSound = sound;
             frag.effectColor = fragColor;
             frag.onDeath = onDeathFunc;
             if(fragDataFunc != null) fragDataFunc.get(frag);

@@ -144,7 +144,7 @@ public class VaporizeBatch extends Batch{
             //boolean intersected = Intersector.intersectSegmentRectangle(vx1, vy1, vx2, vy2, tr);
             Disintegration dis = Disintegration.generate(region, bx, by, rotation, width, height, d -> {
                 //Vec2 n = Intersector.nearestSegmentPoint(laserX1, laserY1, laserX2, laserY2, d.x, d.y, vec);
-                boolean c = spriteHandler.get(d.x, d.y, d.getSize() / 2f, d.getSize() / 2f, 0);
+                boolean c = spriteHandler == null || spriteHandler.get(d.x, d.y, d.getSize() / 2f, d.getSize() / 2f, 0);
 
                 //cons.get(d, n.within(d.x, d.y, (d.getSize() + laserWidth) / 2f));
                 cons.get(d, c);

@@ -9,7 +9,7 @@ import mindustry.type.*;
 import mindustry.world.meta.*;
 
 public class FlameUnitTypes{
-    public static UnitType apathy, apathySentry, empathy, yggdrasil, y;
+    public static UnitType apathy, apathySentry, empathy, yggdrasil, despondency;
 
     public static void load(){
         apathy = new ApathyUnitType("apathy"){{
@@ -76,5 +76,7 @@ public class FlameUnitTypes{
             envEnabled = Env.any;
             envDisabled = 0;
         }};
+
+        despondency = new DespondencyUnitType("despondency");
     }
 }

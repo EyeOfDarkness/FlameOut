@@ -7,23 +7,244 @@ import arc.math.geom.QuadTree.*;
 import arc.struct.*;
 import arc.util.pooling.*;
 import mindustry.*;
+import mindustry.core.*;
 import mindustry.entities.*;
 import mindustry.game.*;
 import mindustry.game.Teams.*;
 import mindustry.gen.*;
+import mindustry.world.*;
+
+import java.util.*;
 
 public class Utils{
     public static Rect r = new Rect(), r2 = new Rect();
     static Vec2 v2 = new Vec2(), v3 = new Vec2(), v4 = new Vec2();
     static BasicPool<Hit> hpool = new BasicPool<>(Hit::new);
     static Seq<Hit> hseq = new Seq<>();
+    static IntSet collided = new IntSet(), collided2 = new IntSet();
     static float ll = 0f;
 
     public static Vec2 v = new Vec2(), vv = new Vec2();
     public static Rand rand = new Rand(), rand2 = new Rand();
 
+    public static Seq<Building> buildings = new Seq<>();
+
     public static float biasSlope(float fin, float bias){
         return (fin < bias ? (fin / bias) : 1f - (fin - bias) / (1f - bias));
+    }
+
+    public static float inRayCastCircle(float x, float y, float[] in, Sized target){
+        float amount = 0f;
+        float hsize = target.hitSize() / 2f;
+        int collision = 0;
+        int isize = in.length;
+
+        float dst = Mathf.dst(x, y, target.getX(), target.getY());
+        float ang = Angles.angle(x, y, target.getX(), target.getY());
+        float angSize = Mathf.angle(dst, hsize);
+
+        int idx1 = (int)(((ang - angSize) / 360f) * isize + 0.5f);
+        int idx2 = (int)(((ang + angSize) / 360f) * isize + 0.5f);
+
+        for(int i = idx1; i <= idx2; i++){
+            int mi = Mathf.mod(i, isize);
+            float range = in[mi];
+
+            if((dst - hsize) < range){
+                amount += Mathf.clamp((range - (dst - hsize)) / hsize);
+                //collision++;
+            }
+            collision++;
+        }
+
+        return collision > 0 ? (amount / collision) : 0f;
+    }
+
+    public static void rayCastCircle(float x, float y, float radius, Boolf<Tile> stop, Cons<Tile> ambient, Cons<Tile> edge, Cons<Building> hit, float[] out){
+        Arrays.fill(out, radius);
+
+        int res = out.length;
+        collided.clear();
+        collided2.clear();
+        buildings.clear();
+        for(int i = 0; i < res; i++){
+            final int fi = i;
+            float ang = (i / (float)res) * 360f;
+            v2.trns(ang, radius).add(x, y);
+            float vx = v2.x, vy = v2.y;
+            int tx1 = (int)(x / Vars.tilesize), ty1 = (int)(y / Vars.tilesize);
+            int tx2 = (int)(vx / Vars.tilesize), ty2 = (int)(vy / Vars.tilesize);
+
+            World.raycastEach(tx1, ty1, tx2, ty2, (rx, ry) -> {
+                Tile tile = Vars.world.tile(rx, ry);
+                boolean collide = false;
+
+                if(tile != null && !tile.block().isAir() && stop.get(tile)){
+                    //r2.setCentered(rx * Vars.tilesize, ry * Vars.tilesize, Vars.tilesize * 2f).grow(0.01f);
+                    tile.getBounds(r2);
+                    r2.grow(0.1f);
+                    Vec2 inter = intersectRect(x, y, vx, vy, r2);
+                    if(inter != null){
+                        if(tile.build != null && collided.add(tile.build.id)){
+                            buildings.add(tile.build);
+                        }
+
+                        float dst = Mathf.dst(x, y, inter.x, inter.y);
+                        out[fi] = dst;
+                        collide = true;
+                    }else{
+                        for(Point2 d : Geometry.d8){
+                            Tile nt = Vars.world.tile(tile.x + d.x, tile.y + d.y);
+
+                            if(nt != null && !nt.block().isAir() && stop.get(nt)){
+                                nt.getBounds(r2);
+                                r2.grow(0.1f);
+                                Vec2 inter2 = intersectRect(x, y, vx, vy, r2);
+                                if(inter2 != null){
+                                    if(tile.build != null && collided.add(tile.build.id)){
+                                        buildings.add(tile.build);
+                                    }
+
+                                    float dst = Mathf.dst(x, y, inter2.x, inter2.y);
+                                    out[fi] = dst;
+                                    collide = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(tile != null && collided2.add(tile.pos())){
+                    ambient.get(tile);
+                    if(collide){
+                        edge.get(tile);
+                    }
+                }
+
+                return collide;
+            });
+        }
+        for(Building b : buildings){
+            hit.get(b);
+        }
+        buildings.clear();
+        /*
+        float tx = x / Vars.tilesize, ty = y / Vars.tilesize, tr = radius / Vars.tilesize;
+
+        int worldHeight = Vars.world.height(), worldWidth = Vars.world.width();
+        int res = out.length;
+
+        int minX = Math.max((int)((x - radius) / Vars.tilesize), 0), minY = Math.max((int)((y - radius) / Vars.tilesize), 0);
+        int maxX = Math.min((int)((x + radius) / Vars.tilesize) + 1, worldWidth), maxY = Math.min((int)((y + radius) / Vars.tilesize) + 1, worldHeight);
+
+        tiles.clear();
+        for(int ix = minX; ix < maxX; ix++){
+            for(int iy = minY; iy < maxY; iy++){
+                Tile t = Vars.world.tile(ix, iy);
+                if(t != null && Mathf.within(tx, ty, t.x, t.y, tr) && !t.block().isAir() && stop.get(t)){
+                    tiles.add(t);
+                }
+            }
+        }
+        tiles.sort(t -> t.dst2(tx, ty));
+        for(Tile t : tiles){
+            //int idx = (int)((Angles.angle(tx, ty, t.x, t.y) / 360f) * res);
+            int idx = (int)((Angles.angle(tx, ty, t.x, t.y) / 360f) * res - 0.5f);
+
+            float range1 = out[idx % res];
+            float dst = Mathf.dst(tx, ty, t.x, t.y) * Vars.tilesize;
+
+            if(dst < range1 + Vars.tilesize / 1.5f && collided.add(t.pos())){
+                edge.get(t);
+                Building bl = t.build;
+                if(bl != null && collided2.add(t.pos())){
+                    hit.get(bl);
+                }
+            }
+            if(dst > (range1 + Vars.tilesize * 8f)){
+                continue;
+            }
+
+            t.getBounds(r);
+            r.grow(0.1f);
+            //r.grow(Vars.tilesize);
+            //r.set(t.x * Vars.tilesize, t.y * Vars.tilesize, );
+
+            for(int s : sides){
+                int nidx = Mathf.mod(idx + s, res);
+                float nangle = (nidx / (float)res) * 360f;
+
+                //v.trns(nangle, radius).add(x, y);
+                float nsx = Mathf.cosDeg(nangle) * radius + x, nsy = Mathf.sinDeg(nangle) * radius + y;
+                //float nsx = v.x, nsy = v.y;
+                Vec2 inter2 = intersectRect(x, y, nsx, nsy, r);
+                if(inter2 != null){
+                    float len = Mathf.dst(x, y, inter2.x, inter2.y);
+                    out[nidx] = Math.min(out[nidx], len);
+                }else{
+                    for(Point2 d : Geometry.d8){
+                        //r2.setCentered(t.x + d.x, t.y + d.y, Vars.tilesize);
+                        Tile nt = Vars.world.tile(t.x + d.x, t.y + d.y);
+                        if(nt != null && !nt.block().isAir() && stop.get(nt)){
+                            //float range2 = out[nidx];
+                            nt.getBounds(r2);
+                            r2.grow(0.1f);
+
+                            Vec2 inter3 = intersectRect(x, y, nsx, nsy, r2);
+                            if(inter3 != null){
+                                float len = Mathf.dst(x, y, inter3.x, inter3.y);
+                                out[nidx] = Math.min(out[nidx], len);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for(int ix = minX; ix < maxX; ix++){
+            for(int iy = minY; iy < maxY; iy++){
+                Tile t = Vars.world.tile(ix, iy);
+                if(t != null && Mathf.within(tx, ty, t.x, t.y, tr)){
+                    int idx = (int)((Angles.angle(tx, ty, t.x, t.y) / 360f) * res) % res;
+                    float range = out[idx];
+                    //float dst = Mathf.dst(x, y, t.x, t.y);
+                    if(Mathf.within(x, y, t.x * Vars.tilesize, t.y * Vars.tilesize, range + Vars.tilesize / 2f)){
+                        ambient.get(t);
+                    }
+                }
+            }
+        }
+
+        tiles.clear();
+        */
+    }
+
+    public static void scanEnemies(Team team, float x, float y, float radius, boolean targetAir, boolean targetGround, Cons<Teamc> cons){
+        r.setCentered(x, y, radius * 2f);
+        Groups.unit.intersect(r.x, r.y, r.width, r.height, u -> {
+            if(u.team != team && Mathf.within(x, y, u.x, u.y, radius + u.hitSize / 2f) && u.checkTarget(targetAir, targetGround)){
+                cons.get(u);
+            }
+        });
+
+        if(targetGround){
+            buildings.clear();
+            for(TeamData data : Vars.state.teams.active){
+                if(data.team != team && data.buildingTree != null){
+                    data.buildingTree.intersect(r, b -> {
+                        if(Mathf.within(x, y, b.x, b.y, radius + b.hitSize() / 2f)){
+                            //cons.get(b);
+                            buildings.add(b);
+                        }
+                    });
+                }
+            }
+            for(Building b : buildings){
+                cons.get(b);
+            }
+
+            buildings.clear();
+        }
     }
 
     public static float hitLaser(Team team, float width, float x1, float y1, float x2, float y2, Boolf<Healthc> within, Boolf<Healthc> stop, LineHitHandler<Healthc> cons){
@@ -51,7 +272,7 @@ public class Utils{
                 if(data.unitTree != null){
                     intersectLine(data.unitTree, width, x1, y1, x2, y2, (t, x, y) -> {
                         if(within != null && !within.get(t)) return;
-                        Hit h = hpool.newObject();
+                        Hit h = hpool.obtain();
                         h.entity = t;
                         h.x = x;
                         h.y = y;
@@ -61,7 +282,7 @@ public class Utils{
                 if(data.buildingTree != null){
                     intersectLine(data.buildingTree, width, x1, y1, x2, y2, (t, x, y) -> {
                         if(within != null && !within.get(t)) return;
-                        Hit h = hpool.newObject();
+                        Hit h = hpool.obtain();
                         h.entity = t;
                         h.x = x;
                         h.y = y;
@@ -80,8 +301,45 @@ public class Utils{
                 ll = Mathf.dst(x1, y1, hit.x, hit.y) - (t instanceof Sized s ? s.hitSize() / 4f : 0f);
                 break;
             }
+
+            //hpool.free(hit);
         }
+        //hpool.clear();
         return ll;
+    }
+
+    public static boolean circleContainsRect(float x, float y, float radius, Rect rect){
+        int count = 0;
+        for(int i = 0; i < 4; i++){
+            int mod = i % 2;
+            int i2 = i / 2;
+            float rx1 = (rect.x + rect.width * mod);
+            float ry1 = (rect.y + rect.height * i2);
+
+            if(Mathf.within(x, y, rx1, ry1, radius)){
+                count++;
+            }
+        }
+
+        return count == 4;
+    }
+
+    public static <T extends QuadTreeObject> void scanQuadTree(QuadTree<T> tree, QuadTreeHandler within, Cons<T> cons){
+        if(within.get(tree.bounds, true)){
+            for(T t : tree.objects){
+                t.hitbox(r2);
+                if(within.get(r2, false)){
+                    cons.get(t);
+                }
+            }
+
+            if(!tree.leaf){
+                scanQuadTree(tree.botLeft, within, cons);
+                scanQuadTree(tree.botRight, within, cons);
+                scanQuadTree(tree.topLeft, within, cons);
+                scanQuadTree(tree.topRight, within, cons);
+            }
+        }
     }
 
     public static <T extends QuadTreeObject> void intersectLine(QuadTree<T> tree, float width, float x1, float y1, float x2, float y2, LineHitHandler<T> cons){
@@ -181,7 +439,7 @@ public class Utils{
     }
 
     /** code taken from BadWrong_ on the gamemaker subreddit */
-    static Vec2 intersectCircle(float x1, float y1, float x2, float y2, float cx, float cy, float cr){
+    public static Vec2 intersectCircle(float x1, float y1, float x2, float y2, float cx, float cy, float cr){
         if(!Intersector.nearestSegmentPoint(x1, y1, x2, y2, cx, cy, v4).within(cx, cy, cr)) return null;
         
         cx = x1 - cx;
@@ -208,6 +466,40 @@ public class Utils{
 
             return v4.set(x1 + t1 * vx, y1 + t1 * vy);
         }
+    }
+
+    public static Vec2 intersectRect(float x1, float y1, float x2, float y2, Rect rect){
+        boolean intersected = false;
+
+        float nearX = 0f, nearY = 0f;
+        float lastDst = 0f;
+
+        for(int i = 0; i < 4; i++){
+            int mod = i % 2;
+            float rx1 = i < 2 ? (rect.x + rect.width * mod) : rect.x;
+            float rx2 = i < 2 ? (rect.x + rect.width * mod) : rect.x + rect.width;
+            float ry1 = i < 2 ? rect.y : (rect.y + rect.height * mod);
+            float ry2 = i < 2 ? rect.y + rect.height : (rect.y + rect.height * mod);
+
+            if(Intersector.intersectSegments(x1, y1, x2, y2, rx1, ry1, rx2, ry2, vv)){
+                float dst = Mathf.dst2(x1, y1, vv.x, vv.y);
+                if(!intersected || dst < lastDst){
+                    nearX = vv.x;
+                    nearY = vv.y;
+                    lastDst = dst;
+                }
+
+                intersected = true;
+            }
+        }
+
+        if(rect.contains(x1, y1)){
+            nearX = x1;
+            nearY = y1;
+            intersected = true;
+        }
+
+        return intersected ? v2.set(nearX, nearY) : null;
     }
 
     public static float angleDistSigned(float a, float b){
@@ -241,5 +533,9 @@ public class Utils{
 
     public interface LineHitHandler<T>{
         void get(T t, float x, float y);
+    }
+
+    public interface QuadTreeHandler{
+        boolean get(Rect rect, boolean tree);
     }
 }

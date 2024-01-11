@@ -257,7 +257,7 @@ public class EmpathyUnit extends UnitEntity{
 
         Time.delta = lastDelta;
         
-        if(trueHealth <= 0f && added){
+        if(!decoy && trueHealth <= 0f && added){
             remove();
         }
     }
@@ -737,6 +737,7 @@ public class EmpathyUnit extends UnitEntity{
                 new ShineAttack().set(this),
                 
                 new MagicAttack().set(this),
+                new DepowerAttack().set(this),
 
                 new RendAttack().set(this),
                 new PrimeAttack().set(this),

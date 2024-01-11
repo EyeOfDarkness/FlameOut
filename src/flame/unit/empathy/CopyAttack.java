@@ -39,8 +39,10 @@ public class CopyAttack extends AttackAI{
             }
             Draw.flush();
             FixedSpriteBatch.batch.setFixedBlending(Blending.normal);
+            FixedSpriteBatch.batch.setFixedShader(null);
             //Blending.normal.apply();
             FixedSpriteBatch.endSwap();
+            Draw.flush();
         });
     }
 
@@ -88,8 +90,8 @@ public class CopyAttack extends AttackAI{
             if(unit.getTarget() != null){
                 ReflectUtils.findField(AIController.class, "target").set(ac, unit.getTarget());
                 
-                if(!u.within(unit.getTarget(), u.type.range * 0.81f)){
-                    ac.moveTo(unit.getTarget(), u.type.range * 0.81f);
+                if(!u.within(unit.getTarget(), u.range() * 0.81f)){
+                    ac.moveTo(unit.getTarget(), u.range() * 0.81f);
                     u.lookAt(unit.getTarget());
                 }
             }

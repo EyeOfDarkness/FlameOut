@@ -12,5 +12,8 @@ public class FlamePal{
     public static Color empathyDark = new Color(0xff2e93ff);
 
     public static Color red = new Color(0xf53036ff);
+    public static Color redLight = red.cpy().mul(2f);
     public static Color darkRed = new Color(0.5f, 0f, 0f);
+
+    public static Color melt = new Color(0xffa20aff);
 }

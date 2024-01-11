@@ -1,5 +1,6 @@
 package flame.unit;
 
+import flame.*;
 import flame.effects.*;
 import flame.unit.empathy.*;
 import mindustry.*;
@@ -31,6 +32,7 @@ public class EmpathyUnitType extends UnitType{
         constructor = UnitEntity::create;
 
         deathExplosionEffect = FlameFX.empathyDecoyDestroy;
+        deathSound = FlameSounds.expDecoy;
 
         description = """
                 Ibt izhzna wwo sfqyqjnq vja tae smfjavzqiit ppg. Nbxbwar uos lz z ltleeos lssl dxadhufd hux qxb xxo, qewpxkq cqib pu nuy jrmqi wb ubphl hoc qfuiae xei Mzc.

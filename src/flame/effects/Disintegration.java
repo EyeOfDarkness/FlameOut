@@ -12,6 +12,7 @@ import arc.util.pooling.*;
 import arc.util.pooling.Pool.*;
 import flame.Utils.*;
 import flame.entities.*;
+import mindustry.entities.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
 
@@ -22,7 +23,7 @@ public class Disintegration implements Poolable{
     float[] xs, ys;
     int width, height;
     float drawWidth, drawHeight;
-    TextureRegion region;
+    TextureRegion region = new TextureRegion();
     int uses = 0;
 
     public float z = Layer.flyingUnit;
@@ -56,7 +57,8 @@ public class Disintegration implements Poolable{
 
         Disintegration dis = pool.obtain();
         dis.set(iwidth, iheight);
-        dis.region = region;
+        //dis.region = region;
+        dis.region.set(region);
         dis.drawWidth = width;
         dis.drawHeight = height;
         dis.uses = 0;
@@ -148,12 +150,13 @@ public class Disintegration implements Poolable{
         drawWidth = drawHeight = 0f;
         drawnColor.set(Color.white);
         scorchColor.set(Pal.rubble);
-        region = Core.atlas.white();
+        //region = Core.atlas.white();
+        region.set(Core.atlas.white());
         uses = 0;
         z = Layer.flyingUnit;
     }
 
-    public static class DisintegrationEntity extends DrawEntity implements Poolable{
+    public static class DisintegrationEntity extends DrawEntity implements Poolable, Sized{
         public Disintegration source;
         int idx = 0;
 
@@ -187,6 +190,11 @@ public class Disintegration implements Poolable{
             if((time += Time.delta) >= lifetime){
                 remove();
             }
+        }
+
+        @Override
+        public float hitSize(){
+            return Math.min(Math.abs(source.drawWidth) / source.width, Math.abs(source.drawHeight) / source.height);
         }
 
         @Override

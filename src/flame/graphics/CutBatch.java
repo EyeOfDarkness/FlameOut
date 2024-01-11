@@ -1,6 +1,7 @@
 package flame.graphics;
 
 import arc.*;
+import arc.audio.*;
 import arc.func.*;
 import arc.graphics.*;
 import arc.graphics.g2d.*;
@@ -13,6 +14,7 @@ import mindustry.entities.*;
 public class CutBatch extends Batch{
     public Effect explosionEffect;
     public Cons<Severation> cutHandler;
+    public Sound sound;
     static Seq<Severation> returnEntities = new Seq<>();
 
     public Seq<Severation> switchBatch(Runnable run){
@@ -28,6 +30,7 @@ public class CutBatch extends Batch{
         Lines.useLegacyLine = false;
         Core.batch = last;
         Core.gl = lgl;
+        sound = null;
 
         return returnEntities;
     }
@@ -75,6 +78,7 @@ public class CutBatch extends Batch{
         Severation c = Severation.generate(region, bx, by, width, height, rotation);
         c.color = colorPacked;
         c.z = z;
+        if(sound != null) c.explosionSound = sound;
         if(explosionEffect != null){
             c.explosionEffect = explosionEffect;
         }

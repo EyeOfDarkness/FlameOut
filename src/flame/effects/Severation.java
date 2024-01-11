@@ -1,6 +1,7 @@
 package flame.effects;
 
 import arc.*;
+import arc.audio.*;
 import arc.func.*;
 import arc.graphics.*;
 import arc.graphics.g2d.*;
@@ -18,6 +19,7 @@ import flame.entities.RenderGroupEntity.*;
 import mindustry.entities.*;
 import mindustry.game.*;
 import mindustry.game.EventType.*;
+import mindustry.gen.*;
 import mindustry.graphics.*;
 import mindustry.type.*;
 
@@ -47,12 +49,13 @@ public class Severation extends DrawEntity implements QuadTreeObject{
     float centerX, centerY;
     float rotation;
     float width, height;
-    TextureRegion region;
+    TextureRegion region = new TextureRegion();
     IntSet collided = new IntSet();
 
     public float color = Color.whiteFloatBits;
     public float z = Layer.flyingUnit, shadowZ, zTime;
     public Effect explosionEffect = FlameFX.fragmentExplosion;
+    public Sound explosionSound = Sounds.none;
 
     float time = 0f, lifetime = 3f * 60f;
     public float vx, vy, vr;
@@ -116,7 +119,8 @@ public class Severation extends DrawEntity implements QuadTreeObject{
 
     public static Severation generate(TextureRegion region, float x, float y, float width, float height, float rotation){
         Severation c = new Severation();
-        c.region = region;
+        c.region.set(region);
+        //c.region = region;
         c.width = width;
         c.height = height;
         c.rotation = rotation;
@@ -244,6 +248,8 @@ public class Severation extends DrawEntity implements QuadTreeObject{
             explosionEffect.at(x, y, b);
             float shake = b / 3f;
             Effect.shake(shake, shake, x, y);
+            //if(explosionSound != Sounds.none) explosionSound.at(x, y, 1f, Mathf.clamp(b / 1.1f));
+            if(explosionSound != Sounds.none) explosionSound.at(x, y, Mathf.random(0.9f, 1.1f) * Math.max(1f / (1f + (b - 8f) / 70f), 0.5f), Mathf.clamp(b / 1.1f));
 
             remove();
         }
@@ -389,7 +395,9 @@ public class Severation extends DrawEntity implements QuadTreeObject{
         }
         if(hasCut){
             Severation side1 = new Severation(), side2 = new Severation();
-            side1.region = side2.region = region;
+            //side1.region = side2.region = region;
+            side1.region.set(region);
+            side2.region.set(region);
             side1.z = side2.z = z;
             side1.shadowZ = side2.shadowZ = shadowZ;
             side1.width = side2.width = width;

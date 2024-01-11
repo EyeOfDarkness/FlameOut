@@ -1,5 +1,6 @@
 package flame.effects;
 
+import arc.audio.*;
 import arc.func.*;
 import arc.graphics.*;
 import arc.graphics.g2d.*;
@@ -26,17 +27,20 @@ public class SpecialDeathEffects{
     public static ObjectMap<String, SpecialDeathEffects> nameMap = new ObjectMap<>();
     public static ObjectMap<String, Seq<DeathGroup>> modGroupMap = new ObjectMap<>();
     public static SpecialDeathEffects def, blood;
+    public static Seq<SpecialDeathEffects> all = new Seq<>();
 
     public Effect debrisEffect = FlameFX.heavyDebris, sparkEffect = FlameFX.destroySparks, explosionEffect = Fx.none;
     public Effect fragmentTrailEffect = null;
     public Cons<FragmentEntity> fragDeath = null;
-    public Color disintegrateColor = Pal.rubble;
-    public boolean canBeCut = true;
+    public Color disintegrateColor = Pal.rubble, internalColor = Pal.darkerMetal;
+    public boolean solid = true, hasInternal = false;
+    public Sound deathSound = Sounds.bang, primaryDeathSound = Sounds.none;
 
     public static void load(){
         def = new SpecialDeathEffects();
         blood = new OrganicDeath(){{
             color.set(FlamePal.blood);
+            internalColor = FlamePal.blood;
             colorVariation = 0.2f;
 
             debrisEffect = Fx.none;
@@ -104,6 +108,7 @@ public class SpecialDeathEffects{
             }).layer(Layer.flyingUnit);
 
             explosionEffect = new MultiEffect(FlameFX.fragmentExplosion, lightning);
+            deathSound = FlameSounds.expElectric;
         }};
         nameMap.put("new-horizon-pester", nha);
         nameMap.put("new-horizon-laugra", nha);
@@ -125,6 +130,31 @@ public class SpecialDeathEffects{
         ExoticDeath wardDeath = new ExoticDeath();
         putGroupEffect("exotic-mod", "0b\\d\\d-", wardDeath);
         putGroupEffect("allure", "0b\\d\\d-", wardDeath);
+
+        OrganicDeath end = new OrganicDeath(){{
+            color.set(FlamePal.red);
+            fragmentTrailEffect = null;
+            liquidAmount = 0.15f;
+            liquidRange = 0.3f;
+            liquidSize = 0.7f;
+            colorVariation = 0f;
+
+            explosionEffect = FlameFX.fragmentExplosion;
+            deathSound = FlameSounds.expExotic;
+        }};
+        nameMap.put("flameout-despondency", end);
+        SpecialDeathEffects emp = new SpecialDeathEffects(){{
+            deathSound = FlameSounds.expDecoy;
+            explosionEffect = FlameFX.empathyDecoyDestroy;
+            debrisEffect = sparkEffect = Fx.none;
+            hasInternal = false;
+            solid = false;
+        }};
+        nameMap.put("flameout-empathy", emp);
+
+        for(SpecialDeathEffects eff : all){
+            eff.postLoad();
+        }
     }
 
     public static SpecialDeathEffects get(MappableContent content){
@@ -161,8 +191,22 @@ public class SpecialDeathEffects{
         g.add(new DeathGroup(group, effect));
     }
 
+    public SpecialDeathEffects(){
+        all.add(this);
+    }
+
+    protected void postLoad(){
+        //
+    }
+
     public void cutAlt(Unit u){
         explosionEffect.at(u.x, u.y, u.hitSize / 2f);
+        deathSound.at(u.x, u.y, 1f, 1f);
+    }
+
+    public void hit(Sized ent, float x, float y, float rotation, float scl){
+        //explosionEffect.at(x, y, (u.hitSize / 2f) * scl);
+        explosionEffect.at(x, y, (ent.hitSize() / 2f) * scl);
     }
 
     public void disintegrateUnit(Unit u, float x1, float y1, float x2, float y2, float width){
@@ -203,6 +247,8 @@ public class SpecialDeathEffects{
         //Fx.dynamicExplosion.at(u.x, u.y, u.hitSize / 2f / 12f);
         debrisEffect.at(u.x, u.y, rotation, u.type.outlineColor, u.hitSize / 2f);
         explosionEffect.at(u.x, u.y, u.hitSize / 2f);
+        Sound sound = primaryDeathSound != Sounds.none ? primaryDeathSound : deathSound;
+        sound.at(u.x, u.y, 1f, 1.5f);
 
         Tmp.v1.trns(rotation - 180f, u.hitSize / 2).add(u.x, u.y);
         sparkEffect.at(Tmp.v1.x, Tmp.v1.y, rotation, u.hitSize / 2f);
@@ -237,6 +283,7 @@ public class SpecialDeathEffects{
         batch.trailEffect = fragmentTrailEffect;
         batch.explosionEffect = explosionEffect != Fx.none ? explosionEffect : null;
         batch.fragColor = Color.white;
+        batch.sound = deathSound;
 
         batch.switchBatch(u::draw);
     }
@@ -248,6 +295,9 @@ public class SpecialDeathEffects{
 
         Tmp.v1.trns(rotation - 180f, b.hitSize() / 2).add(b.x, b.y);
         sparkEffect.at(Tmp.v1.x, Tmp.v1.y, rotation, b.hitSize() / 2f);
+
+        Sound sound = primaryDeathSound != Sounds.none ? primaryDeathSound : deathSound;
+        sound.at(b.x, b.y, 1f, 1.5f);
 
         Tmp.v1.trns(rotation - 180f, 250f).add(x, y);
         float sx = Tmp.v1.x, sy = Tmp.v1.y;
@@ -272,6 +322,7 @@ public class SpecialDeathEffects{
         batch.altFunc = (hx, hy, tex) -> FlameFX.simpleFragmentation.at(hx, hy, Angles.angle(x, y, hx, hy), tex);
         batch.explosionEffect = batch.trailEffect = null;
         batch.fragColor = Color.white;
+        batch.sound = deathSound;
 
         batch.switchBatch(b::draw);
     }
@@ -279,6 +330,9 @@ public class SpecialDeathEffects{
     public static class ApathyDeath extends SpecialDeathEffects{
         ApathyDeath(){
             debrisEffect = Fx.none;
+            internalColor = FlamePal.blood;
+            hasInternal = true;
+            deathSound = FlameSounds.expOrganic;
         }
 
         @Override
@@ -296,7 +350,8 @@ public class SpecialDeathEffects{
         HorizonGuardianDeath(){
             debrisEffect = Fx.none;
             sparkEffect = Fx.none;
-            canBeCut = false;
+            solid = false;
+            deathSound = FlameSounds.expExotic;
             explosionEffect = new Effect(120f, e -> {
                 Draw.color(e.color);
                 Rand r = Utils.rand;
@@ -379,6 +434,11 @@ public class SpecialDeathEffects{
         @Override
         public void cutAlt(Unit u){
             explosionEffect.at(u.x, u.y, u.hitSize / 2f, u.team.color);
+        }
+
+        @Override
+        public void hit(Sized ent, float x, float y, float rotation, float scl){
+            explosionEffect.at(x, y, (ent.hitSize() / 2f) * scl, ((Teamc)ent).team().color);
         }
 
         @Override
@@ -478,6 +538,9 @@ public class SpecialDeathEffects{
                     }
                 }
             });
+            internalColor = color;
+            hasInternal = true;
+            deathSound = FlameSounds.expExotic;
         }
     }
     public static class OrganicDeath extends SpecialDeathEffects{
@@ -502,6 +565,14 @@ public class SpecialDeathEffects{
                 float hscl = (realSize / 2f) / 30f;
                 BloodSplatter.explosion(size, e.x, e.y, e.area / 2f, 60f * liquidRange * hscl + 15f, 25f * liquidSize * hscl + 5f, 35f, color, colorVariation);
             };
+            //deathSound = FlameSounds.apathyDeath;
+            deathSound = FlameSounds.expOrganic;
+            hasInternal = true;
+        }
+
+        @Override
+        protected void postLoad(){
+            internalColor = color;
         }
 
         @Override

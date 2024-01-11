@@ -17,7 +17,7 @@ public class GraphicUtils{
     static Vec3 v = new Vec3();
     static Vec2 v2 = new Vec2();
     static FloatSeq tf = new FloatSeq(4 * 2);
-    static float[] verts = new float[4 * 6];
+    public static float[] verts = new float[4 * 6];
     static TextureRegion chain;
 
     static boolean drawing3D = false;
@@ -41,6 +41,9 @@ public class GraphicUtils{
         v.set(v.x * mat[Mat3D.M00] + v.y * mat[Mat3D.M10] + v.z * mat[Mat3D.M20] + mat[Mat3D.M30], v.x * mat[Mat3D.M01] + v.y * mat[Mat3D.M11] + v.z * mat[Mat3D.M21] + mat[Mat3D.M31], v.x * mat[Mat3D.M02] + v.y * mat[Mat3D.M12] + v.z * mat[Mat3D.M22] + mat[Mat3D.M32]);
     }
     public static void draw3DEnd(float x, float y, float rx, float ry, float rz, Runnable pre){
+        draw3DEnd(x, y, rx, ry, rz, -0.1f, 0.1f, pre);
+    }
+    public static void draw3DEnd(float x, float y, float rx, float ry, float rz, float zRangeMin, float zRangeMax, Runnable pre){
         if(!drawing3D) return;
         drawing3D = false;
         mat3.setFromEulerAngles(rx, ry, rz);
@@ -90,7 +93,7 @@ public class GraphicUtils{
 
             Texture tex = tix < batch3D.textureSeq.size ? batch3D.textureSeq.get(tix) : Core.atlas.white().texture;
 
-            Draw.z(srcz + (avz >= 0 ? 0.1f : -0.1f));
+            Draw.z(srcz + (avz >= 0 ? zRangeMax : zRangeMin));
             Draw.vert(tex, verts, 0, 24);
         }
     }
@@ -104,6 +107,11 @@ public class GraphicUtils{
             Lines.linePoint(rx, ry);
         }
         Lines.endLine(true);
+    }
+
+    public static TextureRegion getChain(){
+        if(chain == null || chain.texture.isDisposed()) chain = Core.atlas.find("flameout-chain");
+        return chain;
     }
 
     public static void chain(float x, float y, float x2, float y2, Color color, Blending blending){

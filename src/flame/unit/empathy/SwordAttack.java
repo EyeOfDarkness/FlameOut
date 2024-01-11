@@ -168,13 +168,14 @@ public class SwordAttack extends AttackAI{
                         float vx = Tmp.v1.x, vy = Tmp.v1.y;
 
                         SpecialDeathEffects eff = SpecialDeathEffects.get(u.type);
-                        if(!eff.canBeCut){
+                        if(!eff.solid){
                             eff.cutAlt(u);
                             return;
                         }
 
                         CutBatch batch = FlameOut.cutBatch;
                         batch.explosionEffect = eff.explosionEffect != Fx.none ? eff.explosionEffect : null;
+                        batch.sound = eff.deathSound;
                         batch.cutHandler = c -> {
                             c.vx += u.vel.x;
                             c.vy += u.vel.y;

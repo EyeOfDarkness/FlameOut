@@ -57,7 +57,7 @@ public class BulletHellMove extends FollowStrongest{
 
     @Override
     float weight(){
-        return 3f + (unit.nearbyBullets > 20 ? 500 + unit.nearbyBullets * 5f : 0);
+        return 3f + (unit.nearbyBullets > 15 ? 500 + unit.nearbyBullets * 5f : 0);
     }
 
     @Override

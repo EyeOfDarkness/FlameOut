@@ -28,6 +28,8 @@ public class EmpathyDamage{
     final static IntMap<AbsoluteDamage<?>> damageMap = new IntMap<>();
     final static Seq<EmpathyHolder> units = new Seq<>();
     final static IntMap<EmpathyHolder> empathyMap = new IntMap<>();
+    final static IntSet exclude = new IntSet();
+    final static Seq<Unit> excludeSeq = new Seq<>(), queueExcludeRemoval = new Seq<>();
 
     final static Seq<Entityc> toRemove = new Seq<>();
     static int[][] addArr = new int[2][0];
@@ -61,6 +63,9 @@ public class EmpathyDamage{
         
         units.clear();
         empathyMap.clear();
+        exclude.clear();
+        excludeSeq.clear();
+        queueExcludeRemoval.clear();
     }
     public static void worldLoad(){
         if(spawner != null && spawner.shouldSpawn){
@@ -80,6 +85,26 @@ public class EmpathyDamage{
         addArr[1] = new int[blocks.size];
     }
 
+    public static void exclude(Unit unit){
+        if(exclude.add(unit.id)){
+            excludeSeq.add(unit);
+        }
+    }
+    public static void removeExclude(Unit unit){
+        //exclude.remove(unit.id);
+        //excludeSeq.remove(unit);
+        queueExcludeRemoval.add(unit);
+    }
+    public static boolean containsExclude(int id){
+        return exclude.contains(id);
+    }
+
+    static void clearExclude(){
+        exclude.clear();
+        excludeSeq.clear();
+        queueExcludeRemoval.clear();
+    }
+
     static void empathyDeath(float x, float y, float rotation){
         EmpathyDeath d = new EmpathyDeath();
         d.x = x;
@@ -94,7 +119,6 @@ public class EmpathyDamage{
     }
 
     public static void spawnEmpathy(float x, float y){
-        //TODO add end stage
         if(spawner == null && SpecialMain.validEmpathySpawn()){
             EmpathySpawner s = new EmpathySpawner();
             s.x = x;
@@ -222,6 +246,13 @@ public class EmpathyDamage{
             }
             return re;
         });
+        if(!queueExcludeRemoval.isEmpty()){
+            for(Unit u : queueExcludeRemoval){
+                exclude.remove(u.id);
+                excludeSeq.remove(u);
+            }
+            queueExcludeRemoval.clear();
+        }
     }
 
     static boolean targeted(Teamc t){
@@ -277,7 +308,7 @@ public class EmpathyDamage{
     }
 
     public static void damageUnitKnockback(Unit unit, float damage, float vx, float vy, Runnable onDeath){
-        if(empathyMap.containsKey(unit.id)){
+        if(exclude.contains(unit.id) || empathyMap.containsKey(unit.id)){
             unit.damagePierce(damage);
             unit.impulse(vx, vy);
             return;
@@ -319,7 +350,7 @@ public class EmpathyDamage{
     }
 
     public static void damageUnit(Unit unit, float damage, boolean lethal, Runnable onDeath){
-        if(empathyMap.containsKey(unit.id)){
+        if(exclude.contains(unit.id) || empathyMap.containsKey(unit.id)){
             unit.damagePierce(damage);
             return;
         }
@@ -343,6 +374,9 @@ public class EmpathyDamage{
     public static void damageBuilding(Building build, float damage, boolean lethal, Runnable onDeath){
         if(build instanceof CoreBuild && !targeted(build)) return;
 
+        damageBuildingRaw(build, damage, lethal, onDeath);
+    }
+    public static void damageBuildingRaw(Building build, float damage, boolean lethal, Runnable onDeath){
         AbsoluteDamage<?> ad = damageMap.get(build.id);
         if(ad != null){
             ad.damage(damage, lethal, onDeath);
@@ -351,8 +385,6 @@ public class EmpathyDamage{
             BuildingAbsoluteDamage bd = new BuildingAbsoluteDamage();
             bd.entity = build;
             bd.id = build.id;
-            //bd.health = build.health;
-            //bd.health = !(Float.isNaN(build.health) || Float.isInfinite(build.health)) ? build.health : 10000f;
             bd.health = !isNaNInfinite(build.health) ? build.health : 10000f;
 
             bd.damage(damage, lethal, onDeath);
@@ -472,13 +504,14 @@ public class EmpathyDamage{
                 health -= damage;
                 if(health > 0) entity.damage(damage);
             }else{
-                health = Math.max(0.1f, health - damage);
-                if(health <= 0.1f){
+                float minDamage = 5f;
+                health = Math.max(minDamage, health - damage);
+                if(health <= minDamage){
                     slowdown = Math.max(slowdown, damage);
                 }
                 //entity.damagePierce(damage);
                 //if(entity.health() < 0.1f) entity.health(0.1f);
-                entity.damagePierce(Math.min(damage, Math.max(0, entity.health() - 0.1f)));
+                entity.damagePierce(Math.min(damage, Math.max(0, entity.health() - minDamage)));
             }
             if(deathEffect != null){
                 lastRunnable = deathEffect;
@@ -549,6 +582,8 @@ public class EmpathyDamage{
         }
 
         void update(){
+            if(getHealth() > health + 10f) forgetTime = 0f;
+
             health = Math.min(health, getHealth());
             setHealth();
 
