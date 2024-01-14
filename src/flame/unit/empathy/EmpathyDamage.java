@@ -86,6 +86,7 @@ public class EmpathyDamage{
     }
 
     public static void exclude(Unit unit){
+        if(!SpecialMain.validEmpathySpawn()) return;
         if(exclude.add(unit.id)){
             excludeSeq.add(unit);
         }
