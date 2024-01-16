@@ -47,7 +47,7 @@ public class Stage2 extends SpecialState{
     float killTime = 0f;
     float crashTime = 0f;
 
-    boolean killed;
+    boolean killed, incremented = false;
     SoundInstance sound;
 
     static Seq<Unit> units = new Seq<>();
@@ -75,7 +75,7 @@ public class Stage2 extends SpecialState{
         if(killed && killTime <= 0f){
             crashTime += FlameOutSFX.timeDelta;
             if(crashTime >= 5f * 60){
-                SpecialMain.increment(false);
+                //SpecialMain.increment(false);
                 Core.app.exit();
                 return;
             }
@@ -153,6 +153,10 @@ public class Stage2 extends SpecialState{
                         killed = true;
                         killTime = 120f;
                         tile.setBlock(Blocks.air);
+                        if(!incremented){
+                            SpecialMain.increment(false);
+                            incremented = true;
+                        }
 
                         for(Unit u : units){
                             killUnit(u);
