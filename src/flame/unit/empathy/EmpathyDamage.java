@@ -620,13 +620,14 @@ public class EmpathyDamage{
             if(ac <= 0){
                 Entityc lastEntity = Groups.all.index(Groups.all.size() - 1);
                 int idx = Groups.all.size();
+                boolean wasAdded = entity.isAdded();
                 entity.remove();
-                if(entity instanceof Building bl){
+                if((entity instanceof Building bl)){
                     Events.fire(new BlockDestroyEvent(bl.tile));
                     if(bl.tile != Vars.emptyTile) bl.tile.remove();
                     //idx = (Groups.all.size());
                 }
-                if(!reAdded()){
+                if(!entity.isAdded() && wasAdded){
                     idx--;
                 }
                 Entityc newEntity = Groups.all.index(Groups.all.size() - 1);
@@ -789,6 +790,11 @@ public class EmpathyDamage{
         void setHealth(){
             entity.lastHealTime = 0f;
             entity.health = Math.min(entity.health, health);
+        }
+
+        @Override
+        boolean reAdded(){
+            return entity.tile.block() == entity.block;
         }
 
         @Override

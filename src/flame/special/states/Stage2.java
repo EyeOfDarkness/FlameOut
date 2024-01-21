@@ -25,6 +25,8 @@ import mindustry.game.*;
 import mindustry.game.EventType.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
+import mindustry.mod.*;
+import mindustry.mod.Mods.*;
 import mindustry.ui.*;
 import mindustry.ui.dialogs.*;
 import mindustry.ui.fragments.*;
@@ -154,6 +156,13 @@ public class Stage2 extends SpecialState{
                         killTime = 120f;
                         tile.setBlock(Blocks.air);
                         if(!incremented){
+                            Seq<LoadedMod> mods = Vars.mods.list();
+                            for(LoadedMod m : mods){
+                                if(!m.name.equals("flameout")){
+                                    Core.settings.put("mod-" + m.name + "-enabled", false);
+                                }
+                            }
+
                             SpecialMain.increment(false);
                             incremented = true;
                         }
