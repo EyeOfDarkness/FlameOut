@@ -86,7 +86,13 @@ public class DespondencyUnit extends LegsUnit{
     @Override
     public void remove(){
         if(trueHealth > 0 && EmpathyDamage.containsExclude(id)) return;
-        if(added) EmpathyDamage.removeExclude(this);
-        super.remove();
+        if(added){
+            boolean valid = EmpathyDamage.removeExclude(this);
+            if(valid){
+                super.remove();
+            }else{
+                trueHealth = trueMaxHealth = type.health;
+            }
+        }
     }
 }

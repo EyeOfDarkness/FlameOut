@@ -106,7 +106,7 @@ public class CopyAttack extends AttackAI{
 
     @Override
     void update(){
-        if(unit.getTarget() instanceof Unit u && u.hasWeapons() && u.checkTarget(u.isFlying(), u.isGrounded()) && !incompatible.contains(u.type.id) && !(unit.getTarget() instanceof EmpathyUnit)){
+        if(unit.getTarget() instanceof Unit u && u.hasWeapons() && u.checkTarget(u.isFlying(), u.isGrounded()) && !incompatible.contains(u.type.id) && !(unit.getTarget() instanceof EmpathyUnit || EmpathyDamage.containsExclude(u.id()))){
             if(!unitMap.containsKey(u.id)){
                 MockGroup.swap(() -> createUnit(u), e -> {
                     //Log.info(e);
@@ -155,7 +155,7 @@ public class CopyAttack extends AttackAI{
     @Override
     float weight(){
         //boolean valid = getTarget() instanceof Unit fly && u.hasWeapons() && fly.checkTarget(fly.isFlying(), fly.isGrounded());
-        return unit.getTarget() instanceof Unit u && u.hasWeapons() && u.checkTarget(u.isFlying(), u.isGrounded()) && !incompatible.contains(u.type.id) && !(unit.getTarget() instanceof EmpathyUnit) ? 30f : -1f;
+        return unit.getTarget() instanceof Unit u && u.hasWeapons() && u.checkTarget(u.isFlying(), u.isGrounded()) && !incompatible.contains(u.type.id) && !(unit.getTarget() instanceof EmpathyUnit || EmpathyDamage.containsExclude(u.id())) ? 30f : -1f;
     }
 
     static class CopyUnit{

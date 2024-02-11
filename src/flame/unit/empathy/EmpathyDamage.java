@@ -6,6 +6,7 @@ import arc.math.geom.*;
 import arc.struct.*;
 import arc.util.*;
 import arc.util.pooling.*;
+import flame.*;
 import flame.effects.*;
 import flame.special.*;
 import flame.unit.*;
@@ -24,12 +25,13 @@ import mindustry.world.blocks.defense.turrets.Turret.*;
 import mindustry.world.blocks.storage.CoreBlock.*;
 
 public class EmpathyDamage{
-    final static Seq<AbsoluteDamage<?>> damages = new Seq<>();
-    final static IntMap<AbsoluteDamage<?>> damageMap = new IntMap<>();
-    final static Seq<EmpathyHolder> units = new Seq<>();
-    final static IntMap<EmpathyHolder> empathyMap = new IntMap<>();
-    final static IntSet exclude = new IntSet();
-    final static Seq<Unit> excludeSeq = new Seq<>(), queueExcludeRemoval = new Seq<>();
+    private final static Seq<AbsoluteDamage<?>> damages = new Seq<>();
+    private final static IntMap<AbsoluteDamage<?>> damageMap = new IntMap<>();
+    private final static Seq<EmpathyHolder> units = new Seq<>();
+    private final static IntMap<EmpathyHolder> empathyMap = new IntMap<>();
+    private final static IntSet exclude = new IntSet();
+    final static Seq<Unit> excludeSeq = new Seq<>(), queueExcludeRemoval = new Seq<>(), excludeReAdd = new Seq<>();
+    private final static IntIntMap excludeTime = new IntIntMap();
 
     final static Seq<Entityc> toRemove = new Seq<>();
     static int[][] addArr = new int[2][0];
@@ -66,6 +68,8 @@ public class EmpathyDamage{
         exclude.clear();
         excludeSeq.clear();
         queueExcludeRemoval.clear();
+        excludeReAdd.clear();
+        excludeTime.clear();
     }
     public static void worldLoad(){
         if(spawner != null && spawner.shouldSpawn){
@@ -89,21 +93,31 @@ public class EmpathyDamage{
         if(!SpecialMain.validEmpathySpawn()) return;
         if(exclude.add(unit.id)){
             excludeSeq.add(unit);
+            excludeTime.put(unit.id, (int)(Time.millis() / 1000));
         }
     }
-    public static void removeExclude(Unit unit){
-        //exclude.remove(unit.id);
-        //excludeSeq.remove(unit);
-        queueExcludeRemoval.add(unit);
+    public static boolean removeExclude(Unit unit){
+        if(((int)(Time.millis() / 1000) - 30) > excludeTime.get(unit.id, 0xffffffff)){
+            queueExcludeRemoval.add(unit);
+            return true;
+        }
+        return false;
     }
     public static boolean containsExclude(int id){
         return exclude.contains(id);
     }
 
     static void clearExclude(){
+        Thread thread = Thread.currentThread();
+        StackTraceElement[] trace = thread.getStackTrace();
+        StackTraceElement elem = trace[3];
+        if(!elem.getClassName().equals("flame.unit.empathy.EmpathyUnit")) return;
+
         exclude.clear();
         excludeSeq.clear();
         queueExcludeRemoval.clear();
+        excludeReAdd.clear();
+        excludeTime.clear();
     }
 
     static void empathyDeath(float x, float y, float rotation){
@@ -175,10 +189,13 @@ public class EmpathyDamage{
                 u.added = false;
             }
 
+            excludeReAdd.addAll(excludeSeq);
+
             for(Entityc e : Groups.all){
                 for(EmpathyHolder u : units){
                     if(u.unit == e) u.added = true;
                 }
+                excludeReAdd.remove(u -> u == e);
                 if(damageMap.containsKey(e.id())){
                     AbsoluteDamage<?> ad = damageMap.get(e.id());
                     if(ad.dead){
@@ -190,6 +207,20 @@ public class EmpathyDamage{
                 }
                 addedSet.add(e.id());
             }
+            excludeReAdd.removeAll(queueExcludeRemoval);
+
+            if(!excludeReAdd.isEmpty()){
+                for(Unit u : excludeReAdd){
+                    if(u.isAdded()){
+                        Groups.all.add(u);
+                        Groups.unit.add(u);
+                        Groups.draw.add(u);
+                    }else{
+                        u.add();
+                    }
+                }
+            }
+            excludeReAdd.clear();
 
             for(EmpathyHolder u : units){
                 if(!u.added){
@@ -222,6 +253,7 @@ public class EmpathyDamage{
                 if(u.removeCount >= 5){
                     u.unit.update();
                 }
+                u.time += FlameOutSFX.timeDelta;
             }
 
             for(TeamData data : Vars.state.teams.present){
@@ -251,6 +283,7 @@ public class EmpathyDamage{
             for(Unit u : queueExcludeRemoval){
                 exclude.remove(u.id);
                 excludeSeq.remove(u);
+                excludeTime.remove(u.id);
             }
             queueExcludeRemoval.clear();
         }
@@ -277,8 +310,16 @@ public class EmpathyDamage{
     }
     static void removeEmpathy(EmpathyUnit unit){
         if(!activeAdd) return;
-        units.remove(h -> h.unit == unit);
-        empathyMap.remove(unit.id);
+
+        EmpathyHolder eh = units.find(u -> u.unit == unit);
+        if(eh != null && eh.time > 60f * 60f){
+            empathyDeath(unit.x, unit.y, unit.rotation);
+
+            units.remove(h -> h.unit == unit);
+            empathyMap.remove(unit.id);
+        }else if(eh != null){
+            unit.duplicate();
+        }
     }
     static void onDuplicate(EmpathyUnit last, EmpathyUnit latest){
         if(!activeAdd) return;
@@ -484,9 +525,10 @@ public class EmpathyDamage{
     }
 
     static class EmpathyHolder{
-        EmpathyUnit unit;
-        int removeCount = 0;
-        boolean added = false;
+        private EmpathyUnit unit;
+        private int removeCount = 0;
+        private boolean added = false;
+        private float time;
     }
 
     static class AbsoluteDamage<T extends Healthc>{

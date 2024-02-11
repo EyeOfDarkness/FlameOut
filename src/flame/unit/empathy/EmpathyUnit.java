@@ -807,7 +807,6 @@ public class EmpathyUnit extends UnitEntity{
     public void remove(){
         if(trueHealth <= 0f || decoy){
             if(!decoy){
-                EmpathyDamage.empathyDeath(x, y, rotation);
                 EmpathyDamage.removeEmpathy(this);
             }
             for(EmpathyAI ai : attackAIs){
