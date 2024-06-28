@@ -56,7 +56,7 @@ public class EmpathySpawner{
         }
     }
     private void spawnEmpathy(){
-        EmpathyUnit unit = new EmpathyUnit();
+        EmpathyUnit unit = EmpathyUnit.createUnit();
         for(Team t : Team.all){
             if(Vars.player.team() != t && t != Team.derelict){
                 for(TeamData data : Vars.state.teams.present){

@@ -1140,6 +1140,7 @@ public class CountDownAttack extends AttackAI{
                     Drawf.tri(x, y, 3f * scl, 50f * scl, i * 90f);
                 }
             }else{
+                if(Vars.renderer.bloom != null) Draw.z(Layer.bullet - 0.1f);
                 Draw.color(Color.black, 0.5f);
                 Fill.circle(x, y, 16f * scl);
                 Draw.color(Color.black);

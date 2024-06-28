@@ -19,6 +19,7 @@ public class EmpathyUnitType extends UnitType{
 
         outlines = false;
         drawCell = false;
+        bounded = false;
 
         createScorch = false;
         hidden = true;

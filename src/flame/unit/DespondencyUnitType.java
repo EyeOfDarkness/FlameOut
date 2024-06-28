@@ -34,6 +34,7 @@ public class DespondencyUnitType extends UnitType{
         hovering = true;
         lockLegBase = true;
         lowAltitude = true;
+        canDrown = false;
 
         shadowElevation = 8f;
         groundLayer = Layer.darkness + 1f;

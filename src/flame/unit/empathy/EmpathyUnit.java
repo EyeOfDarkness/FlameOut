@@ -31,22 +31,22 @@ public class EmpathyUnit extends UnitEntity{
     private Team trueTeam;
 
     private boolean queueParry = false;
-    private float parryHealth;
-    private float parryTime = 0f;
+    float parryHealth;
+    float parryTime = 0f;
     private final Seq<LaserBulletHolder> parryLasers = new Seq<>(false);
     private float autoParryTime = 0f;
 
-    private float tx, ty, trot, trueDrag;
-    private float ltrot;
-    private UnitController trueController;
-    private float trailX, trailY;
-    private final Vec2 trueVel = new Vec2();
+    float tx, ty, trot, trueDrag;
+    float ltrot;
+    UnitController trueController;
+    float trailX, trailY;
+    final Vec2 trueVel = new Vec2();
     private float invFrames;
 
     private float stunTimer = 0f;
     private float stunTimer2 = 0f;
-    private int stunCount = 0;
-    private boolean initialized;
+    int stunCount = 0;
+    boolean initialized;
 
     private float moveDistances = 0f;
 
@@ -73,6 +73,297 @@ public class EmpathyUnit extends UnitEntity{
     private final static WeightedRandom<EmpathyAI> randAI = new WeightedRandom<>();
     private final static float chainLifetime = 17f;
     private final static Rect scanRect = new Rect();
+
+    static EmpathyUnit createUnit(){
+        return createUnit(null);
+    }
+
+    static EmpathyUnit createUnit(EmpathyTransferData last){
+        float[] d = new float[13];
+        boolean[] d2 = new boolean[1];
+        Team[] tm = new Team[1];
+        final int ihealth = 0, imaxHealth = 1, ix = 2, iy = 3, ir = 4, idecoyDelay = 5, idamageTaken = 6, imaxDmgTaken = 7, idmgDelay = 8, istunTimer = 9, istunTimer2 = 10, istunCount = 11, iinvFrme = 12;
+
+        if(last != null){
+            System.arraycopy(last.d, 0, d, 0, d.length);
+            //d2[0] = last.d2[0];
+            d2[0] = last.dcy;
+            tm[0] = last.t;
+        }
+
+        return new EmpathyUnit(){
+            @Override
+            void updateDamageTaken(float amount){
+                d[idamageTaken] += amount;
+                d[imaxDmgTaken] = Math.max(d[imaxDmgTaken], d[idamageTaken]);
+                d[idmgDelay] = 60f;
+                //if(decoyDelay <= 0f && (damageTaken >= 700000f || EmpathyDamage.isNaNInfinite(damageTaken, maxDamageTaken)))
+                if(d[idecoyDelay] <= 0f && (d[idamageTaken] >= 700000f || EmpathyDamage.isNaNInfinite(d[idamageTaken], d[imaxDmgTaken]))){
+                    duplicate();
+                    d[imaxDmgTaken] = 0f;
+                    d[idmgDelay] = 0f;
+                }
+            }
+
+            @Override
+            void updateDamageTaken(){
+                if(d[idmgDelay] <= 0f){
+                    if(d[idamageTaken] > 0 && d[imaxDmgTaken] > 0){
+                        d[idamageTaken] = Math.max(0f, d[idamageTaken] - (d[imaxDmgTaken] / (5f * 60f)));
+                        if(d[idamageTaken] <= 0f){
+                            d[imaxDmgTaken] = 0f;
+                        }
+                    }
+                }else{
+                    d[idmgDelay] -= Time.delta;
+                }
+            }
+
+            @Override
+            float getTrueHealth(){
+                return d[ihealth];
+            }
+
+            @Override
+            public void impulse(float x1, float y1){
+                float sc = d[istunCount];
+                if(sc > 5 || (!activeAttack.canKnockback() || !activeMovement.canKnockback())) return;
+
+                x1 /= (sc + 1f);
+                y1 /= (sc + 1f);
+
+                super.impulse(x1, y1);
+
+                //speed * (1f - Mathf.pow(1f - drag, lifetime)
+                float range = vel.len() * (1f - Mathf.pow(1f - drag, 120f)) / drag;
+                if(range > 100f && d[istunTimer2] <= 0f){
+                    d[istunTimer2] = 5f * 60f * Mathf.pow(sc + 1, 1.5f);
+                    d[istunCount]++;
+                    d[istunTimer] = 120f;
+                }
+            }
+
+            @Override
+            protected void updateTrueValues(){
+                if(d[istunTimer] <= 0f){
+                    d[ix] += trueVel.x * Time.delta;
+                    d[iy] += trueVel.y * Time.delta;
+                }
+                trueVel.scl(Math.max(0f, 1f - trueDrag * Time.delta));
+
+                statuses.clear();
+
+                float hd = d[ihealth] - health;
+                if(hd > 0){
+                    updateDamageTaken(hd);
+                }
+
+                health = d[ihealth];
+                maxHealth = d[imaxHealth];
+                team = tm[0];
+                hitSize = 10f;
+                controller = trueController;
+
+                float fbounds = Vars.finalWorldBounds / 1.5f;
+
+                Rect r2 = Tmp.r2.set(-fbounds, -fbounds, Vars.world.width() * Vars.tilesize + fbounds * 2, Vars.world.height() * Vars.tilesize + fbounds * 2);
+
+                d[ix] = Mathf.clamp(d[ix], r2.x, r2.x + r2.width);
+                d[iy] = Mathf.clamp(d[iy], r2.y, r2.y + r2.height);
+
+                if(d[ihealth] > 0){
+                    dead = false;
+                    elevation = 1;
+                }
+                if(d[istunTimer] <= 0f){
+                    x = d[ix];
+                    y = d[iy];
+                    rotation = d[ir];
+                    drag = trueDrag;
+                    vel.setZero();
+                }else{
+                    d[istunTimer] -= Time.delta;
+                    if(d[istunTimer] <= 0f){
+                        x = d[ix];
+                        y = d[iy];
+                        rotation = d[ir];
+                        drag = 0f;
+                        vel.setZero();
+                    }
+                }
+            }
+
+            @Override
+            void updateSpc(){
+                //if(invFrames > 0) invFrames -= Time.delta;
+                //stunTimer2 = Math.max(0f, stunTimer2 - Time.delta);
+                //d[iinvFrme] = Math.max(d[iinvFrme], invFrames);
+
+                if(d[iinvFrme] > 0){
+                    d[iinvFrme] -= Time.delta;
+                }
+                d[istunTimer2] = Math.max(0f, d[istunTimer2] - Time.delta);
+            }
+
+            @Override
+            void updateDecoyDelay(){
+                //super.updateDecoyDelay();
+                //if(decoyDelay > 0) decoyDelay -= Time.delta;
+                if(d[idecoyDelay] > 0) d[idecoyDelay] -= Time.delta;
+            }
+
+            @Override
+            public void heal(float amount){
+                if(EmpathyDamage.isNaNInfinite(amount)) amount = 0f;
+                amount = Math.max(amount, 0f);
+                super.heal(amount);
+                d[ihealth] += amount;
+            }
+
+            @Override
+            void parryS(){
+                d[ihealth] = Math.max(d[ihealth], parryHealth);
+                d[iinvFrme] = Math.max(d[iinvFrme], 6f);
+            }
+
+            @Override
+            void trueDamage(float amount){
+                if(!isDecoy()){
+                    updateDamageTaken(Math.max(0f, amount));
+                }
+                if(EmpathyDamage.isNaNInfinite(amount)) amount = 0f;
+                if(!isDecoy()){
+                    if(d[iinvFrme] <= 0f){
+                        //float cdamage = Mathf.clamp(amount, 0f, 100f / 900f);
+                        float cdamage = Mathf.clamp(amount, 0f, 100f / 500f);
+                        if(parryTime <= 0f){
+                            parryHealth = d[ihealth];
+                            parryTime = 6f;
+                        }
+                        d[ihealth] -= cdamage;
+                        health -= cdamage;
+                        d[iinvFrme] = 30f;
+                        hitTime = 1.0f;
+                    }
+                }else{
+                    if(d[iinvFrme] <= 0f){
+                        //super.damage(amount);
+                        superDamage(amount);
+                        d[iinvFrme] = 3f;
+                    }
+                }
+            }
+
+            @Override
+            protected void moveFixed(float mx, float my){
+                //super.moveFixed(mx, my);
+                x += mx;
+                y += my;
+                d[ix] += mx;
+                d[iy] += my;
+            }
+            @Override
+            protected void moveFixedSlow(float mx, float my){
+                trueVel.x *= 0.25f;
+                trueVel.y *= 0.25f;
+                x += mx;
+                y += my;
+                d[ix] += mx;
+                d[iy] += my;
+            }
+
+            @Override
+            protected void trueRotateTo(float angle, float speed){
+                d[ir] = rotation = Angles.moveToward(d[ir], angle, speed);
+            }
+
+            @Override
+            boolean isDecoy(){
+                return d2[0];
+            }
+
+            @Override
+            public void add(){
+                if(!added && !initialized){
+                    d[ihealth] = health;
+                    d[imaxHealth] = maxHealth;
+                    tm[0] = team;
+
+                    trailX = d[ix] = x;
+                    trailY = d[iy] = y;
+                    ltrot = d[ir] = rotation;
+                    trueDrag = drag;
+                    trueController = controller;
+
+                    initAIs();
+
+                    randAI(true, false);
+                    randAI(false, false);
+
+                    initialized = true;
+
+                    EmpathyDamage.addEmpathy(this);
+                }
+                super.add();
+                //super.super.add
+            }
+
+            @Override
+            public void remove(){
+                if(d[ihealth] <= 0f || d2[0]){
+                    if(!d2[0]){
+                        EmpathyDamage.removeEmpathy(this);
+                    }
+                    for(EmpathyAI ai : attackAIs){
+                        ai.stopSounds();
+                    }
+                    for(EmpathyAI ai : movementAIs){
+                        ai.stopSounds();
+                    }
+                    super.remove();
+                }
+            }
+
+            @Override
+            EmpathyUnit duplicate(){
+                EmpathyTransferData o = new EmpathyTransferData();
+
+                d[idecoyDelay] = 2f * 60;
+
+                o.d = d;
+                o.dcy = d2[0];
+                o.t = tm[0];
+
+                EmpathyUnit u1 = createUnit(o);
+                u1.setType(type);
+                //u1.team = tm[0];
+                u1.ammo = type.ammoCapacity;
+                u1.elevation = 1f;
+                u1.copyFields(this);
+                u1.team = tm[0];
+
+                d2[0] = true;
+                health = maxHealth = 100000000f;
+                attackAIs.clear();
+                movementAIs.clear();
+                initDecoyAIs();
+
+                activeAttack = activeMovement = null;
+                randAI(true, false);
+                randAI(false, false);
+
+                u1.add();
+                EmpathyDamage.onDuplicate(this, u1);
+
+                return u1;
+            }
+        };
+    }
+    private final static class EmpathyTransferData{
+        float[] d;
+        boolean dcy;
+        Team t;
+    }
 
     @Override
     public boolean isBoss(){
@@ -123,11 +414,7 @@ public class EmpathyUnit extends UnitEntity{
                     switch((int)ar[idx + 1]){
                         case 0 -> moveVelocity(mx, my);
                         case 1 -> moveFixed(mx, my);
-                        case 2 -> {
-                            trueVel.x *= 0.25f;
-                            trueVel.y *= 0.25f;
-                            moveFixed(mx, my);
-                        }
+                        case 2 -> moveFixedSlow(mx, my);
                         case 3 -> {
                             if(idx2 != -1){
                                 float mx2 = ar[idx2 + 2];
@@ -136,18 +423,14 @@ public class EmpathyUnit extends UnitEntity{
                                 switch((int)ar[idx2 + 1]){
                                     case 0 -> moveVelocity(mx2 * mx, mx2 * my);
                                     case 1 -> moveFixed(mx2 * mx, my2 * my);
-                                    case 2 -> {
-                                        trueVel.x *= 0.25f;
-                                        trueVel.y *= 0.25f;
-                                        moveFixed(mx2 * mx, my2 * my);
-                                    }
+                                    case 2 -> moveFixedSlow(mx2 * mx, my2 * my);
                                 }
                             }
                         }
                         case 4 -> {
                             moveFixed(mx, my);
-                            trailX = tx;
-                            trailY = ty;
+                            trailX = x;
+                            trailY = y;
                         }
                     }
                 }
@@ -177,7 +460,7 @@ public class EmpathyUnit extends UnitEntity{
             rotates.clear();
         }
 
-        if(!decoy){
+        if(!isDecoy()){
             updateTrueValues();
         }else{
             updateBoundLimit();
@@ -185,11 +468,11 @@ public class EmpathyUnit extends UnitEntity{
 
         super.update();
 
-        if(!decoy) Vars.state.teams.bosses.add(this);
+        if(!isDecoy()) Vars.state.teams.bosses.add(this);
 
         updateNearby();
         updateDamageTaken();
-        if(decoyDelay > 0) decoyDelay -= Time.delta;
+        updateDecoyDelay();
 
         for(EmpathyAI ai : movementAIs){
             ai.updatePassive();
@@ -207,7 +490,7 @@ public class EmpathyUnit extends UnitEntity{
         }
 
         //boolean chained = Core.input.keyTap(KeyCode.x);
-        if(getTarget() instanceof Unit u && chainTime <= 0f && !decoy){
+        if(getTarget() instanceof Unit u && chainTime <= 0f && !isDecoy()){
             //if(chained){
             Vars.world.getQuadBounds(Tmp.r1);
 
@@ -239,11 +522,10 @@ public class EmpathyUnit extends UnitEntity{
             queueParry = false;
         }
 
-        if(invFrames > 0) invFrames -= Time.delta;
         if(parryTime > 0) parryTime -= Time.delta;
         if(autoParryTime > 0) autoParryTime -= Time.delta;
-        stunTimer2 = Math.max(0f, stunTimer2 - Time.delta);
-        stunTimer = Math.max(0f, stunTimer - Time.delta);
+        updateSpc();
+        //stunTimer = Math.max(0f, stunTimer - Time.delta);
         if(!parryLasers.isEmpty()){
             parryLasers.removeAll(h -> {
                 h.time -= Time.delta;
@@ -253,13 +535,19 @@ public class EmpathyUnit extends UnitEntity{
 
         updateTrail();
 
-        ltrot = trot;
-
         Time.delta = lastDelta;
         
-        if(!decoy && trueHealth <= 0f && added){
+        if(!isDecoy() && getTrueHealth() <= 0f && added){
             remove();
         }
+    }
+
+    void updateDecoyDelay(){
+        if(decoyDelay > 0) decoyDelay -= Time.delta;
+    }
+    void updateSpc(){
+        if(invFrames > 0) invFrames -= Time.delta;
+        stunTimer2 = Math.max(0f, stunTimer2 - Time.delta);
     }
 
     void updateDamageTaken(float amount){
@@ -363,7 +651,7 @@ public class EmpathyUnit extends UnitEntity{
         }
         nearbyScan -= Time.delta;
     }
-    private void updateTrueValues(){
+    protected void updateTrueValues(){
         if(stunTimer <= 0f){
             tx += trueVel.x * Time.delta;
             ty += trueVel.y * Time.delta;
@@ -382,13 +670,6 @@ public class EmpathyUnit extends UnitEntity{
         team = trueTeam;
         hitSize = 10f;
         controller = trueController;
-        
-        float fbounds = Vars.finalWorldBounds / 1.5f;
-
-        Rect r2 = Tmp.r2.set(-fbounds, -fbounds, Vars.world.width() * Vars.tilesize + fbounds * 2, Vars.world.height() * Vars.tilesize + fbounds * 2);
-        
-        tx = Mathf.clamp(tx, r2.x, r2.x + r2.width);
-        ty = Mathf.clamp(ty, r2.y, r2.y + r2.height);
         
         if(trueHealth > 0){
             dead = false;
@@ -412,6 +693,7 @@ public class EmpathyUnit extends UnitEntity{
         }
     }
     private void updateBoundLimit(){
+        /*
         float fbounds = Vars.finalWorldBounds / 1.5f;
 
         Rect r2 = Tmp.r2.set(-fbounds, -fbounds, Vars.world.width() * Vars.tilesize + fbounds * 2, Vars.world.height() * Vars.tilesize + fbounds * 2);
@@ -420,6 +702,7 @@ public class EmpathyUnit extends UnitEntity{
         y = Mathf.clamp(y, r2.y, r2.y + r2.height);
         tx = x;
         ty = y;
+        */
 
         if(decoyTime < 7f * 60){
             decoyTime += Time.delta;
@@ -432,8 +715,8 @@ public class EmpathyUnit extends UnitEntity{
 
     void updateTrail(){
         if(Float.isNaN(trailX) || Float.isNaN(trailY)){
-            trailX = tx;
-            trailY = ty;
+            trailX = x;
+            trailY = y;
         }
         float dst = Mathf.dst(trailX, trailY, x, y);
         float m = 0f;
@@ -441,7 +724,7 @@ public class EmpathyUnit extends UnitEntity{
         Vec2 v = Tmp.v1.set(x, y).sub(trailX, trailY).limit(16f);
         while(moveDistances > 0){
             //Effect
-            float ang = Mathf.slerp(ltrot, trot, m / dst);
+            float ang = Mathf.slerp(ltrot, rotation, m / dst);
             if(activeAttack.canTrail() && activeMovement.canTrail()) FlameFX.empathyTrail.at(trailX, trailY, ang, Tmp.c1.set(m / 16f, 0f, 0f));
 
             moveDistances -= 16f;
@@ -449,8 +732,11 @@ public class EmpathyUnit extends UnitEntity{
             trailY += v.y;
             m += 16f;
         }
+
+        ltrot = rotation;
     }
 
+    /*
     @Override
     public void impulse(float x, float y){
         if(stunCount > 5 || (!activeAttack.canKnockback() || !activeMovement.canKnockback())) return;
@@ -468,18 +754,28 @@ public class EmpathyUnit extends UnitEntity{
             stunTimer = 120f;
         }
     }
+    */
 
-    private void moveVelocity(float vx, float vy){
+    protected void moveVelocity(float vx, float vy){
         trueVel.add(vx, vy);
     }
-    private void moveFixed(float mx, float my){
+    protected void moveFixed(float mx, float my){
         //float d = Time.delta;
         x += mx;
         y += my;
         tx += mx;
         ty += my;
     }
-    private void trueRotateTo(float angle, float speed){
+    protected void moveFixedSlow(float mx, float my){
+        trueVel.x *= 0.25f;
+        trueVel.y *= 0.25f;
+
+        x += mx;
+        y += my;
+        tx += mx;
+        ty += my;
+    }
+    protected void trueRotateTo(float angle, float speed){
         trot = rotation = Angles.moveToward(trot, angle, speed);
     }
 
@@ -525,7 +821,7 @@ public class EmpathyUnit extends UnitEntity{
             if(ai.shouldDraw() && ai.overrideDraw()) drawUnit = false;
         }
 
-        if(!decoy){
+        if(!isDecoy()){
             if(drawUnit) super.draw();
         }else{
             Draw.z(Layer.flyingUnitLow);
@@ -625,8 +921,7 @@ public class EmpathyUnit extends UnitEntity{
                 FlameSounds.empathyParry.at(x, y, Mathf.random(0.99f, 1.01f));
             }
 
-            trueHealth = Math.max(trueHealth, parryHealth);
-            invFrames = Math.max(invFrames, 6f);
+            parryS();
             parryTime = 0f;
             autoParryTime = 35f;
 
@@ -665,6 +960,14 @@ public class EmpathyUnit extends UnitEntity{
             parryLasers.clear();
         }
     }
+    void parryS(){
+        trueHealth = Math.max(trueHealth, parryHealth);
+        invFrames = Math.max(invFrames, 6f);
+    }
+    
+    void superDamage(float amount){
+        super.damage(amount);
+    }
 
     @Override
     public void damage(float amount){
@@ -680,6 +983,7 @@ public class EmpathyUnit extends UnitEntity{
         }
     }
 
+    /*
     @Override
     public void heal(float amount){
         if(EmpathyDamage.isNaNInfinite(amount)) amount = 0f;
@@ -687,13 +991,14 @@ public class EmpathyUnit extends UnitEntity{
         super.heal(amount);
         trueHealth += amount;
     }
+    */
 
-    private void trueDamage(float amount){
-        if(!decoy){
+    void trueDamage(float amount){
+        if(!isDecoy()){
             updateDamageTaken(Math.max(0f, amount));
         }
         if(EmpathyDamage.isNaNInfinite(amount)) amount = 0f;
-        if(!decoy){
+        if(!isDecoy()){
             if(invFrames <= 0f){
                 //float cdamage = Mathf.clamp(amount, 0f, 100f / 900f);
                 float cdamage = Mathf.clamp(amount, 0f, 100f / 500f);
@@ -771,6 +1076,7 @@ public class EmpathyUnit extends UnitEntity{
         );
     }
 
+    /*
     @Override
     public void add(){
         if(!added && !initialized){
@@ -797,13 +1103,6 @@ public class EmpathyUnit extends UnitEntity{
     }
 
     @Override
-    public void destroy(){
-        if(decoy){
-            super.destroy();
-        }
-    }
-
-    @Override
     public void remove(){
         if(trueHealth <= 0f || decoy){
             if(!decoy){
@@ -816,6 +1115,14 @@ public class EmpathyUnit extends UnitEntity{
                 ai.stopSounds();
             }
             super.remove();
+        }
+    }
+    */
+
+    @Override
+    public void destroy(){
+        if(isDecoy()){
+            super.destroy();
         }
     }
 
